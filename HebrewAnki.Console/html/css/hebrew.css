@@ -1,0 +1,68 @@
+@font-face {
+    font-family: "Ezra SIL";
+    src: url("_SILEOT.ttf");
+}
+
+html {
+    font-size: 10px;
+}
+
+.card {
+    font-family: "SBL Hebrew", "Ezra SIL", "Times New Roman", serif;
+    color: black;
+    background-color: white;
+    font-size: 1.6rem;
+    text-align: center;
+}
+
+.gloss,
+.audio,
+.data,
+.deck-info {
+    font-family: "Times New Roman", serif;
+}
+
+.heb-writ {
+    font-size: 5rem;
+}
+
+.heb-hint {
+    font-size: 3rem;
+}
+
+.gloss {
+    font-size: 2.2rem;
+}
+
+.audio,
+.deck-info h1 {
+    font-size: 2rem;
+}
+
+.deck-info h2 {
+    font-size: 1.6rem;
+}
+
+.deck-info h4,
+.deck-info .fine-print-title {
+    font-size: 1.2rem;
+}
+
+.deck-info {
+    font-size: 1rem;
+}
+
+.primary,
+.word-class,
+.fine-print-title {
+    font-weight: bold;
+}
+
+.data {
+    text-align: right;
+}
+
+.notes,
+.deck-notes {
+    text-align: left;
+}

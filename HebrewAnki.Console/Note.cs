@@ -2,18 +2,14 @@
 {
     public class Note
     {
-        public string PrintedText { get; set; }
-
-        public string Root { get; set; }
+        public string Word { get; set; }
 
         public string Definition { get; set; }
 
-        public string Oshm {  get; set; }
+        public List<WordVariation> Variations { get; set; } = new();
 
         public int TotalOccurrences { get; set; } = 0;
 
-        public int TotalRootOccurrences { get; set; } = 0;
-
-        public bool IsHebrew => Oshm.Contains("Hebrew");
+        public bool IsHebrew => Variations.First().Oshm.Contains("Hebrew");
     }
 }

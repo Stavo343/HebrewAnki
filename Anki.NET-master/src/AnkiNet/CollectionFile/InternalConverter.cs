@@ -171,7 +171,7 @@ internal sealed class InternalConverter
             n.NoteTypeId,
             0,
             0,
-            "",
+            n.tags,
             n.Fields,
             n.Fields[0], // TODO Check this is correct
             0, // TODO Check this is correct
@@ -251,7 +251,7 @@ internal sealed class InternalConverter
 
             var ids = cardsForThisNote.Select(c => (c.Ordinal, c.Id)).ToArray();
 
-            resultCollection.AddNoteWithCards(note.Id, deckId, note.ModelId, note.Fields, ids);
+            resultCollection.AddNoteWithCards(note.Id, deckId, note.ModelId, note.Tags, note.Fields, ids);
         }
 
         // Ignore RevLogs and Graves

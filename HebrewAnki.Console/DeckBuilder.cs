@@ -9,7 +9,6 @@ namespace HebrewAnki.Console
         private readonly List<OshmEntry> _oshmEntries;
 
         private Dictionary<string, int> _masterWordList = new();
-        private Dictionary<string, int> _masterRootList = new();
 
         public DeckBuilder(
             List<LexicalIndexEntry> lexicalIndexEntries,
@@ -23,7 +22,7 @@ namespace HebrewAnki.Console
 
         public List<Deck> Build()
         {
-            var globalDeckNamePrefix = "CompleteTest";
+            var globalDeckNamePrefix = "Hebrew/Aramaic Vocab Per Chapter";
             var decks = new List<Deck>();
 
             foreach (var wlcBookName in BookNames.WlcBookHebrewNames.Keys)
@@ -57,9 +56,6 @@ namespace HebrewAnki.Console
                             continue;
                         }
 
-                        //if (wlcWord.Lemma == "d/7451")
-                        //    _ = 1;
-
                         LexicalIndexEntry lexicalIndexEntry = null;
 
                         try
@@ -72,67 +68,55 @@ namespace HebrewAnki.Console
                                 && wlcWord.Lemma != "6887"
                                 && wlcWord.Lemma != "3651")
                                 _ = 1;
+                            chainedLemma = null;
                             continue;
                         }
 
-                        var word = chainedLemma == null
-                            ? wlcWord.Value.Replace("/", "")
-                            : lexicalIndexEntry!.Word;
-
-                        if (_masterWordList.ContainsKey(word))
-                            _masterWordList[word]++;
+                        if (_masterWordList.ContainsKey(lexicalIndexEntry.Word))
+                            _masterWordList[lexicalIndexEntry.Word]++;
                         else
-                            _masterWordList.Add(word, 1);
-
-                        if (_masterRootList.ContainsKey(lexicalIndexEntry.Word))
-                            _masterRootList[lexicalIndexEntry.Word]++;
-                        else
-                            _masterRootList.Add(lexicalIndexEntry.Word, 1);
+                            _masterWordList.Add(lexicalIndexEntry.Word, 1);
 
                         var oshmEntry = _oshmEntries.First(e => e.MorphologyCode == wlcWord.Morph);
 
-                        if (!deck.Notes.Any(n => n.PrintedText == word))
+                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == lexicalIndexEntry.Word);
+
+                        var variation = wlcWord.Value.Replace("/", "");
+
+                        if (existingNote == null)
                             deck.Notes.Add(new Note
                             {
-                                PrintedText = word,
-                                Root = lexicalIndexEntry.Word,
+                                Word = lexicalIndexEntry.Word,
                                 Definition = lexicalIndexEntry.Definition,
-                                Oshm = oshmEntry.Value
+                                Variations =
+                                [
+                                    new()
+                                    {
+                                        Variation = variation,
+                                        Oshm = oshmEntry.Value
+                                    }
+                                ]
                                 // have to wait to get occurrence counts
                             });
+                        else if (!existingNote.Variations.Any(v => v.Variation == variation))
+                            existingNote.Variations.Add(
+                                new()
+                                {
+                                    Variation = variation,
+                                    Oshm = oshmEntry.Value
+                                });
 
                         chainedLemma = null;
                     }
 
                     decks.Add(deck);
+
+                    chainedLemma = null;
                 }
             }
 
             foreach (var note in decks.SelectMany(d => d.Notes))
-            {
-                note.TotalOccurrences = _masterWordList[note.PrintedText];
-                note.TotalRootOccurrences = _masterRootList[note.Root];
-            }
-
-            var sortedByTotalOccurrences = decks.SelectMany(d => d.Notes).OrderByDescending(d => d.TotalOccurrences).ToList();
-            var sortedByTotalRootOccurrences = decks.SelectMany(d => d.Notes).OrderByDescending(d => d.TotalRootOccurrences).ToList();
-            var hopefullyMatchesBHS = sortedByTotalOccurrences
-                .Where(x => x.IsHebrew)
-                .Select(x =>
-                new
-                {
-                    Word = x.PrintedText,
-                    Count = x.TotalOccurrences,
-                })
-                .Distinct()
-                .Where(x => x.Count > 69).ToList();
-
-            var chapters = decks.Select(x =>
-            new
-            {
-                Chapter = x.Name,
-                UniqueWords = x.Notes.Count,
-            }).OrderByDescending(x => x.UniqueWords);
+                note.TotalOccurrences = _masterWordList[note.Word];
 
             return decks;
         }
