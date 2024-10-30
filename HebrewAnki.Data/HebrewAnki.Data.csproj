@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <Folder Include="lexicon\" />
-    <Folder Include="osis\" />
+    <Folder Include="json metadata\" />
   </ItemGroup>
 
 </Project>

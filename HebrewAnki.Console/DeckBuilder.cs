@@ -1,4 +1,6 @@
-﻿using HebrewAnki.Data.Models;
+﻿using HebrewAnki.Console.Enums;
+using HebrewAnki.Data.Models;
+using System.Text.Json;
 
 namespace HebrewAnki.Console
 {
@@ -8,7 +10,9 @@ namespace HebrewAnki.Console
         private readonly List<WlcBook> _wlcBooks;
         private readonly List<OshmEntry> _oshmEntries;
 
-        private Dictionary<string, int> _masterWordList = new();
+        private readonly string _totalWordOccurrencesJsonPath = "../../../../HebrewAnki.Data/json metadata/totalWordOccurrences.json";
+        private Dictionary<string, int> _totalWordOccurrences = new();
+        private readonly bool _totalWordOccurrencesNeedsUpdated = false;
 
         public DeckBuilder(
             List<LexicalIndexEntry> lexicalIndexEntries,
@@ -18,11 +22,21 @@ namespace HebrewAnki.Console
             _lexicalIndexEntries = lexicalIndexEntries;
             _wlcBooks = wlcBooks;
             _oshmEntries = oshmEntries;
+
+            try
+            {
+                var totalWordOccurrencesJson = File.ReadAllText(_totalWordOccurrencesJsonPath);
+                _totalWordOccurrences = JsonSerializer.Deserialize<Dictionary<string, int>>(totalWordOccurrencesJson)!;
+            }
+            catch
+            {
+                _totalWordOccurrencesNeedsUpdated = true;
+            }
         }
 
-        public List<Deck> Build()
+        public List<Deck> Build(DeckScope deckScope)
         {
-            var globalDeckNamePrefix = "Hebrew/Aramaic Vocab Per Chapter";
+            var globalDeckNamePrefix = $"Hebrew/Aramaic Vocab Per {deckScope.ToString()}";
             var decks = new List<Deck>();
 
             foreach (var wlcBookName in BookNames.WlcBookHebrewNames.Keys)
@@ -32,14 +46,21 @@ namespace HebrewAnki.Console
                 var bookDeckNamePrefix = $"{globalDeckNamePrefix}::{bookName}";
                 var chapterIndex = 0;
 
+                var bookDeck = new Deck
+                {
+                    Name = $"{bookDeckNamePrefix}",
+                };
+
                 foreach (var chapter in wlcBook.Chapters)
                 {
                     chapterIndex++;
 
-                    var deck = new Deck
-                    {
-                        Name = $"{bookDeckNamePrefix}::Chapter {chapterIndex}",
-                    };
+                    var deck = deckScope == DeckScope.Book
+                        ? bookDeck
+                        : new Deck
+                        {
+                            Name = $"{bookDeckNamePrefix}::Chapter {chapterIndex}",
+                        };
 
                     string chainedLemma = null;
 
@@ -49,45 +70,56 @@ namespace HebrewAnki.Console
                         {
                             if (chainedLemma != null
                                 && GetStrippedLemma(wlcWord.Lemma) != chainedLemma)
-                                _ = 1;
+                                throw new InvalidDataException($"{bookName} {chapter}: {GetStrippedLemma(wlcWord.Lemma)} follows {chainedLemma} and does not match.");
 
                             chainedLemma = GetStrippedLemma(wlcWord.Lemma);
 
                             continue;
                         }
 
-                        LexicalIndexEntry lexicalIndexEntry = null;
+                        string word = null;
+                        string definition = null;
 
                         try
                         {
-                            lexicalIndexEntry = GetLexicalIndexEntry(wlcWord.Lemma);
+                            var lexicalIndexEntry = GetLexicalIndexEntry(wlcWord.Lemma);
+                            word = lexicalIndexEntry.Word;
+                            definition = lexicalIndexEntry.Definition;
                         }
                         catch
                         {
-                            if (wlcWord.Lemma != "d/7451"
-                                && wlcWord.Lemma != "6887"
-                                && wlcWord.Lemma != "3651")
-                                _ = 1;
-                            chainedLemma = null;
-                            continue;
+                            var definitionIndex = 1;
+                            var definitionList = new List<string>();
+                            var lexicalIndexEntries = GetLexicalIndexEntries(wlcWord.Lemma);
+                            word = lexicalIndexEntries.First().Word;
+
+                            foreach (var lexicalEntry in lexicalIndexEntries)
+                            {
+                                definitionList.Add($"{definitionIndex}. {lexicalEntry.Definition}");
+                                definitionIndex++;
+                            }
+                            definition = string.Join(" <br /> ", definitionList);
                         }
 
-                        if (_masterWordList.ContainsKey(lexicalIndexEntry.Word))
-                            _masterWordList[lexicalIndexEntry.Word]++;
-                        else
-                            _masterWordList.Add(lexicalIndexEntry.Word, 1);
+                        if (_totalWordOccurrencesNeedsUpdated)
+                        {
+                            if (_totalWordOccurrences.ContainsKey(word))
+                                _totalWordOccurrences[word]++;
+                            else
+                                _totalWordOccurrences.Add(word, 1);
+                        }
 
                         var oshmEntry = _oshmEntries.First(e => e.MorphologyCode == wlcWord.Morph);
 
-                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == lexicalIndexEntry.Word);
+                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == word);
 
                         var variation = wlcWord.Value.Replace("/", "");
 
                         if (existingNote == null)
                             deck.Notes.Add(new Note
                             {
-                                Word = lexicalIndexEntry.Word,
-                                Definition = lexicalIndexEntry.Definition,
+                                Word = word,
+                                Definition = definition,
                                 Variations =
                                 [
                                     new()
@@ -109,14 +141,25 @@ namespace HebrewAnki.Console
                         chainedLemma = null;
                     }
 
-                    decks.Add(deck);
+                    if (deckScope == DeckScope.Chapter)
+                        decks.Add(deck);
 
                     chainedLemma = null;
                 }
+
+                if (deckScope == DeckScope.Book)
+                    decks.Add(bookDeck);
             }
 
             foreach (var note in decks.SelectMany(d => d.Notes))
-                note.TotalOccurrences = _masterWordList[note.Word];
+                note.TotalOccurrences = _totalWordOccurrences[note.Word];
+
+            if (_totalWordOccurrencesNeedsUpdated)
+            {
+                var totalWordOccurrencesJson = JsonSerializer.Serialize(_totalWordOccurrences);
+                File.Delete(_totalWordOccurrencesJsonPath);
+                File.WriteAllText(_totalWordOccurrencesJsonPath, totalWordOccurrencesJson);
+            }
 
             return decks;
         }
@@ -138,6 +181,20 @@ namespace HebrewAnki.Console
                 strong = lemma;
 
             return _lexicalIndexEntries.First(e => e.StrongsIndex == strong && e.Aug == aug);
+        }
+
+        private List<LexicalIndexEntry> GetLexicalIndexEntries(string lemma)
+        {
+            while (lemma.Contains("/"))
+                lemma = lemma.Substring(2);
+
+            var strong = lemma.Contains(" ")
+                ? lemma.Substring(0, lemma.Length - 2)
+                : lemma;
+
+            return _lexicalIndexEntries.Where(e => e.StrongsIndex == strong)
+                .OrderBy(e => e.Aug)
+                .ToList();
         }
 
         private string GetStrippedLemma(string lemma)
