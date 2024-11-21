@@ -5,6 +5,8 @@
         public static Dictionary<string, string> WlcBookHebrewNames =
             new Dictionary<string, string>
             {
+                { "Jonah", "יונה" },
+                { "Ruth", "רות" },
                 //{ "Gen", "בראשית" },
                 //{ "Exod", "שמות" },
                 //{ "Lev", "ויקרא" },
@@ -23,7 +25,6 @@
                 //{ "Joel", "יואל" },
                 //{ "Amos", "עמוס" },
                 //{ "Obad", "עובדיה" },
-                { "Jonah", "יונה" },
                 //{ "Mic", "מיכה" },
                 //{ "Nah", "נחום" },
                 //{ "Hab", "חבקוק" },
@@ -34,7 +35,6 @@
                 //{ "Ps", "תהלים" },
                 //{ "Job", "איוב" },
                 //{ "Prov", "משלי" },
-                //{ "Ruth", "רות" },
                 //{ "Song", "שיר השירים" },
                 //{ "Eccl", "קהלת" },
                 //{ "Lam", "איכה" },

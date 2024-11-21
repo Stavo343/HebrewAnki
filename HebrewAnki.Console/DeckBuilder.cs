@@ -119,9 +119,11 @@ namespace HebrewAnki.Console
 
                         var oshmEntry = _oshmEntries.First(e => e.MorphologyCode == wlcWord.Morph);
 
-                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == word);
-
                         var variation = wlcWord.Value.Replace("/", "");
+
+                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == word);
+                        if (existingNote == null)
+                            existingNote = decks.SelectMany(d => d.Notes).FirstOrDefault(n => n.Word == word);
 
                         if (existingNote == null)
                             deck.Notes.Add(new Note
