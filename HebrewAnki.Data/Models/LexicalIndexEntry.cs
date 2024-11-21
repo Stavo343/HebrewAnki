@@ -6,6 +6,8 @@
 
         public string Definition { get; set; }
 
+        public string BdbIndex { get; set; }
+
         public string StrongsIndex { get; set; }
 
         public string? Aug { get; set; }

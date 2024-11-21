@@ -188,7 +188,7 @@ internal sealed class InternalConverter
             0,
             CardLearningType.New,
             0,
-            0,
+            c.Due,
             0,
             0,
             0,

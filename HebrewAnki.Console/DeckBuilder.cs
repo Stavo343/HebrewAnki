@@ -8,7 +8,9 @@ namespace HebrewAnki.Console
     {
         private readonly List<LexicalIndexEntry> _lexicalIndexEntries;
         private readonly List<WlcBook> _wlcBooks;
+        private readonly List<BdbEntry> _bdbEntries;
         private readonly List<OshmEntry> _oshmEntries;
+        private readonly string _globalDeckNamePrefix;
 
         private readonly string _totalWordOccurrencesJsonPath = "../../../../HebrewAnki.Data/json metadata/totalWordOccurrences.json";
         private Dictionary<string, int> _totalWordOccurrences = new();
@@ -17,11 +19,15 @@ namespace HebrewAnki.Console
         public DeckBuilder(
             List<LexicalIndexEntry> lexicalIndexEntries,
             List<WlcBook> wlcBooks,
-            List<OshmEntry> oshmEntries)
+            List<BdbEntry> bdbEntries,
+            List<OshmEntry> oshmEntries,
+            string globalDeckNamePrefix)
         {
             _lexicalIndexEntries = lexicalIndexEntries;
             _wlcBooks = wlcBooks;
+            _bdbEntries = bdbEntries;
             _oshmEntries = oshmEntries;
+            _globalDeckNamePrefix = globalDeckNamePrefix;
 
             try
             {
@@ -36,14 +42,13 @@ namespace HebrewAnki.Console
 
         public List<Deck> Build(DeckScope deckScope)
         {
-            var globalDeckNamePrefix = $"Hebrew/Aramaic Vocab Per {deckScope.ToString()}";
             var decks = new List<Deck>();
 
             foreach (var wlcBookName in BookNames.WlcBookHebrewNames.Keys)
             {
                 var wlcBook = _wlcBooks.First(w => w.OsisId == wlcBookName);
                 var bookName = BookNames.WlcBookHebrewNames[wlcBookName];
-                var bookDeckNamePrefix = $"{globalDeckNamePrefix}::{bookName}";
+                var bookDeckNamePrefix = $"{_globalDeckNamePrefix}::{bookName}";
                 var chapterIndex = 0;
 
                 var bookDeck = new Deck
@@ -84,7 +89,8 @@ namespace HebrewAnki.Console
                         {
                             var lexicalIndexEntry = GetLexicalIndexEntry(wlcWord.Lemma);
                             word = lexicalIndexEntry.Word;
-                            definition = lexicalIndexEntry.Definition;
+                            var bdbEntry = _bdbEntries.First(b => b.Id == lexicalIndexEntry.BdbIndex);
+                            definition = bdbEntry.Definitions;
                         }
                         catch
                         {
@@ -95,7 +101,9 @@ namespace HebrewAnki.Console
 
                             foreach (var lexicalEntry in lexicalIndexEntries)
                             {
-                                definitionList.Add($"{definitionIndex}. {lexicalEntry.Definition}");
+                                var bdbEntry = _bdbEntries.First(b => b.Id == lexicalEntry.BdbIndex);
+
+                                definitionList.Add($"{definitionIndex}. {bdbEntry.Definitions}");
                                 definitionIndex++;
                             }
                             definition = string.Join(" <br /> ", definitionList);

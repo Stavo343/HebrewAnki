@@ -173,7 +173,7 @@ public class AnkiCollection
                 newCardId++;
             }
 
-            var newCard = new AnkiCard(newCardId, note, cardType.Ordinal);
+            var newCard = new AnkiCard(newCardId, note, cardType.Ordinal, _notes.Count);
             _cards.Add(newCardId, newCard);
             _decks[deckId].AddCard(newCard);
         }
@@ -212,7 +212,7 @@ public class AnkiCollection
 
         foreach (var (ordinal, id) in cardIds)
         {
-            var newCard = new AnkiCard(id, note, ordinal);
+            var newCard = new AnkiCard(id, note, ordinal, _notes.Count);
             _cards.Add(id, newCard);
             _decks[deckId].AddCard(newCard);
         }

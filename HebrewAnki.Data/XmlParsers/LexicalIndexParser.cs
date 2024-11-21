@@ -25,9 +25,6 @@ namespace HebrewAnki.Data.XmlParsers
         {
             foreach (XmlElement entry in part.ChildNodes)
             {
-                //if (entry.Attributes!["id"]?.Value?.ToString()! == "kio")
-                //    _ = 1;
-
                 var w = entry.FirstChild!;
 
                 var def = w.NextSibling!;
@@ -42,6 +39,7 @@ namespace HebrewAnki.Data.XmlParsers
                 {
                     Word = w.InnerText,
                     Definition = def.InnerText,
+                    BdbIndex = xref.Attributes!["bdb"]?.Value?.ToString()!,
                     StrongsIndex = xref.Attributes!["strong"]?.Value?.ToString()!,
                     Aug = xref.Attributes!["aug"]?.Value?.ToString()
                 });

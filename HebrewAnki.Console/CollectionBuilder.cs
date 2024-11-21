@@ -1,4 +1,5 @@
 ﻿using AnkiNet;
+using System.Web;
 
 namespace HebrewAnki.Console
 {
@@ -86,7 +87,7 @@ namespace HebrewAnki.Console
                             : aramaicNoteTypeId,
                         tagsString,
                         note.Word,
-                        note.Definition,
+                        HttpUtility.HtmlEncode(note.Definition),
                         string.Join(" <br /> ", note.Variations.Select(v => $"- {v.Variation}: {v.Oshm}")),
                         note.TotalOccurrences.ToString(),
                         string.Empty

@@ -67,3 +67,27 @@ html {
 .deck-notes {
     text-align: left;
 }
+
+/* Verse display. */
+span.Hebrew {
+    font: 1.5em/1.6em "SBL Hebrew", "Ezra SIL SR", "Ezra SIL", Cardo, "Times New Roman", David, serif;
+    direction: rtl;
+}
+
+span.sense {
+    display: block;
+    margin-left: 1em;
+}
+
+span.ref {
+    color: green;
+    cursor: pointer;
+}
+
+span.foreign {
+    color: red;
+}
+
+.pron, .def, .asp {
+    font-style: italic;
+}
