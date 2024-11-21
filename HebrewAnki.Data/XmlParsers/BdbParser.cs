@@ -34,50 +34,7 @@ namespace HebrewAnki.Data.XmlParsers
                 var entryHtml = string.Empty;
 
                 foreach (XmlNode child in entry.ChildNodes)
-                    switch (child.NodeType)
-                    {
-                        case XmlNodeType.Element:
-                            switch (child.Name)
-                            {
-                                case "w":
-                                    entryHtml += $"<span class=\"Hebrew\">{child.InnerText}</span>";
-                                    break;
-                                case "pos":
-                                    entryHtml += $"<span class=\"pos\">{child.InnerText}</span>";
-                                    break;
-                                case "def":
-                                    entryHtml += $"<span class=\"def\">{child.InnerText}</span>";
-                                    break;
-                                case "em":
-                                    entryHtml += $"<em>{child.InnerText}</em>";
-                                    break;
-                                case "stem":
-                                    entryHtml += $"<span class=\"stem\">{child.InnerText}</span>";
-                                    break;
-                                case "asp":
-                                    entryHtml += $"<span class=\"asp\">{child.InnerText}</span>";
-                                    break;
-                                case "foreign":
-                                    entryHtml += $"<span class=\"foreign\">{child.InnerText}</span>";
-                                    break;
-
-                                case "sense":
-                                case "status":
-                                case "ref":
-                                case "page":
-                                    break;
-                                default:
-                                    throw new NotImplementedException($"XmlElement name {child.Name} not implemented.");
-                            }
-                            break;
-                        case XmlNodeType.Text:
-                            entryHtml += child.InnerText;
-                            break;
-                        case XmlNodeType.Comment:
-                            break;
-                        default:
-                            throw new NotImplementedException($"XmlNode type {child.NodeType} not implemented.");
-                    }
+                    entryHtml += ExtractHtmlFromEntryChild(child);
 
                 entries.Add(new()
                 {
@@ -105,6 +62,55 @@ namespace HebrewAnki.Data.XmlParsers
             }
 
             return entries;
+        }
+
+        private static string ExtractHtmlFromEntryChild(XmlNode child, int indentCount = 0)
+        {
+            switch (child.NodeType)
+            {
+                case XmlNodeType.Element:
+                    switch (child.Name)
+                    {
+                        case "sense":
+                            {
+                                indentCount++;
+                                var senseId = child.Attributes!["n"]?.Value?.ToString()!;
+                                var style = $" style=\"margin-left:{indentCount * 10}px; text-align:left;\"";
+
+                                var senseAsHtml = $"<div{style}>{senseId}. ";
+
+                                foreach (XmlNode senseChild in child.ChildNodes)
+                                    senseAsHtml += ExtractHtmlFromEntryChild(senseChild, indentCount);
+
+                                return $"{senseAsHtml}</div>";
+                            }
+                        case "pos":
+                            return $"<span class=\"pos\">{child.InnerText}</span>";
+                        case "def":
+                            return $"<span class=\"def\">{child.InnerText}</span>";
+                        case "em":
+                            return $"<em>{child.InnerText}</em>";
+                        case "stem":
+                            return $"<span class=\"stem\">{child.InnerText}</span>";
+                        case "asp":
+                            return $"<span class=\"asp\">{child.InnerText}</span>";
+                        case "foreign":
+                            return $"<span class=\"foreign\">{child.InnerText}</span>";
+                        case "w":
+                        case "status":
+                        case "ref":
+                        case "page":
+                            return string.Empty;
+                        default:
+                            throw new NotImplementedException($"XmlElement name {child.Name} not implemented.");
+                    }
+                case XmlNodeType.Text:
+                    return child.InnerText;
+                case XmlNodeType.Comment:
+                    return string.Empty;
+                default:
+                    throw new NotImplementedException($"XmlNode type {child.NodeType} not implemented.");
+            }
         }
     }
 }
