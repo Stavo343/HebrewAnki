@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnkiNet", "Anki.NET-master\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HebrewAnki.Data", "HebrewAnki.Data\HebrewAnki.Data.csproj", "{0104EA4F-F1DC-42E1-A43F-C01741338324}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HebrewAnki.Web", "HebrewAnki.Web\HebrewAnki.Web.csproj", "{6CAECF5D-389A-4CC8-84BE-1977EB546D64}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{0104EA4F-F1DC-42E1-A43F-C01741338324}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0104EA4F-F1DC-42E1-A43F-C01741338324}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0104EA4F-F1DC-42E1-A43F-C01741338324}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CAECF5D-389A-4CC8-84BE-1977EB546D64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CAECF5D-389A-4CC8-84BE-1977EB546D64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CAECF5D-389A-4CC8-84BE-1977EB546D64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CAECF5D-389A-4CC8-84BE-1977EB546D64}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

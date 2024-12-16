@@ -1,0 +1,122 @@
+﻿@page "/"
+@using AnkiNet
+
+<PageTitle>Anki Deck Generator</PageTitle>
+
+<span>@_errorMessage</span>
+<br />
+
+@switch (_homeView)
+{
+    case HomeView.FreshNav:
+        {
+            <div>Do you have a .apkg file already you would like to update?</div>
+            <MudButton @onclick="ReadyToUpload">Yes</MudButton>
+            <MudButton @onclick="@ReadyToSelect">No</MudButton>
+        }
+        break;
+    case HomeView.ReadyToUpload:
+        {
+            <InputFile OnChange="LoadFile" accept=".apkg" />
+        }
+        break;
+    case HomeView.Selection:
+        {
+            <style>
+                .mud-table-cell-custom-group {
+                    font-weight: 500;
+                    width: 95%;
+                }
+
+                .mud-table-cell-custom-group-footer {
+                    padding-bottom: 50px;
+                    text-align: right;
+                }
+            </style>
+
+            <MudTable @ref="_mudTable "Hover="true" Breakpoint="Breakpoint.Sm"
+                      Items="@GetSelectionRows()"
+                      Virtualize="false"
+                      GroupBy="@_groupDefinition"
+                      GroupHeaderStyle="background-color:var(--mud-palette-background-gray)"
+                      Dense="true"
+                      MultiSelection="true">
+                <ColGroup>
+                    <col style="width: 60px;" />
+                    <col style="width: 60px;" />
+                </ColGroup>
+                <HeaderContent>
+                    <MudTh style="width: 60px;"></MudTh>
+                </HeaderContent>
+                <GroupHeaderTemplate>
+                    <MudTh Class="mud-table-cell-custom-group">@(context.Key)</MudTh>
+                </GroupHeaderTemplate>
+                <RowTemplate>
+                    <MudTd>@context.Chapter</MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        break;
+}
+
+@code {
+    private HomeView _homeView = HomeView.FreshNav;
+    
+    private string? _errorMessage;
+
+    private AnkiCollection? _existingAnkiCollection;
+    private MudTable<SelectionRow> _mudTable;
+    
+    private TableGroupDefinition<SelectionRow> _groupDefinition = new()
+    {
+        Indentation = true,
+        Expandable = true,
+        IsInitiallyExpanded = false,
+        Selector = (e) => e.BookName
+    };
+    
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            using MemoryStream ms = new MemoryStream();
+            await e.File.OpenReadStream(200000000000).CopyToAsync(ms);
+            _existingAnkiCollection = await AnkiFileReader.ReadFromStreamAsync(ms);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Something went wrong with reading the .apkg file.";
+        }
+    }
+
+    private void ReadyToUpload()
+    {
+        _homeView = HomeView.ReadyToUpload;
+    }
+
+    private void ReadyToSelect()
+    {
+        _homeView = HomeView.Selection;
+    }
+
+    private class SelectionRow
+    {
+        public string BookName { get; set; }
+        public int Chapter { get; set; }
+    }
+
+    private List<SelectionRow> GetSelectionRows()
+    {
+        var result = new List<SelectionRow>();
+        
+        foreach (var bookName in _chaptersPerBook.Keys)
+            for (var i = 1; i < _chaptersPerBook[bookName] + 1; i++)
+                result.Add(new SelectionRow
+                {
+                    BookName = bookName,
+                    Chapter = i,
+                });
+
+        return result;
+    }
+}
