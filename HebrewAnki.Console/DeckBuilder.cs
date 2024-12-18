@@ -97,7 +97,7 @@ namespace HebrewAnki.Console
                         }
 
                         chainedLemma = null;
-                        if (lemmasToSkip.Contains(wlcWord.Lemma))
+                        if (lemmasToSkip.Contains(GetFormattedLemma(wlcWord.Lemma)))
                             continue;
 
                         string word = null;
@@ -214,12 +214,25 @@ namespace HebrewAnki.Console
                     
                     result.AddRange(
                         wlcChapter.Verses.SelectMany(v => v.Words)
-                            .Where(w => !w.Lemma.Contains("+"))
-                            .Select(w => w.Lemma));
+                            .Select(w => GetFormattedLemma(w.Lemma))
+                            .Distinct());
                 }
             }
 
             return result;
+        }
+
+        private string GetFormattedLemma(string lemma)
+        {
+            lemma = lemma.Replace("+", "");
+            
+            while (lemma.Contains("/"))
+                lemma = lemma.Substring(2);
+
+            if (lemma.Contains(" "))
+                lemma = lemma.Substring(0, lemma.Length - 2);
+
+            return lemma;
         }
 
         private LexicalIndexEntry GetLexicalIndexEntry(string lemma)

@@ -39,7 +39,7 @@
             </style>
 
             <MudTable @ref="_mudTable "Hover="true" Breakpoint="Breakpoint.Sm"
-                      Items="@BookData.GetAllChapters()"
+                      Items="@GetSelectableChapters()"
                       Virtualize="false"
                       GroupBy="@_groupDefinition"
                       GroupHeaderStyle="background-color:var(--mud-palette-background-gray)"
@@ -127,18 +127,68 @@
     
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
+        AnkiCollection uploadedAnkiCollection = null;
+        
         try
         {
             using MemoryStream ms = new MemoryStream();
             await e.File.OpenReadStream(200000000000).CopyToAsync(ms);
-            var existingAnkiCollection = await AnkiFileReader.ReadFromStreamAsync(ms);
-            
-            //TODO: populate chapters to skip
+            uploadedAnkiCollection = await AnkiFileReader.ReadFromStreamAsync(ms);
         }
         catch (Exception ex)
         {
             _errorMessage = "Something went wrong with reading the .apkg file.";
         }
+        
+        SetChaptersToSkip(uploadedAnkiCollection);
+
+        _homeView = HomeView.Selection;
+    }
+
+    private void SetChaptersToSkip(AnkiCollection uploadedCollection)
+    {
+        foreach (var deck in uploadedCollection.Decks)
+        {
+            if (deck.Name == "Default")
+                continue;
+            
+            var deckScope = Int32.TryParse(deck.Name.Last().ToString(), out int unused)
+                ? DeckScope.Chapter
+                : DeckScope.Book;
+            
+            var bookName = deck.Name.Substring(deck.Name.IndexOf("::") + 2);
+            if (deckScope == DeckScope.Chapter)
+                bookName = bookName.Substring(0, bookName.IndexOf("::"));
+
+            if (deckScope == DeckScope.Chapter)
+            {
+                var chapterNumber = deck.Name.Substring(
+                    deck.Name.LastIndexOf(" ") + 1,
+                    deck.Name.Length - deck.Name.LastIndexOf(" ") - 1);
+                
+                _chaptersToSkip.Add(new()
+                {
+                    Book = bookName,
+                    ChapterNumber = Int32.Parse(chapterNumber)
+                });
+            }
+            else
+            {
+                for (var i = 1; i < BookData.ChaptersPerBook[bookName] + 1; i++)
+                    _chaptersToSkip.Add(new()
+                    {
+                        Book = bookName,
+                        ChapterNumber = i
+                    });
+            }
+        }
+    }
+
+    private List<Chapter> GetSelectableChapters()
+    {
+        return BookData.GetAllChapters()
+            .Where(x => !_chaptersToSkip.Any(s => s.Book == x.Book && s.ChapterNumber == x.ChapterNumber))
+            .ToList();
     }
 
     private void ReadyToUpload()
@@ -164,6 +214,7 @@
         var selectedChapters = _mudTable.SelectedItems!.ToList();
         _homeView = HomeView.GeneratingDeck;
         StateHasChanged();
+        await Task.Yield();
         
         ClearLogs();
         Log("Parsing the lexical index");
@@ -193,7 +244,7 @@
     private async Task DownloadFileFromStream()
     {
         using var stream = new MemoryStream(_newCollectionFile);
-        var fileName = $"12/18/24: Hebrew/Aramaic Vocab - {DateTime.Now}";
+        var fileName = $"12/18/24: Hebrew/Aramaic Vocab - {DateTime.Now}.apkg";
 
         using var streamRef = new DotNetStreamReference(stream: stream);
 
