@@ -9,7 +9,7 @@ public record struct AnkiNoteType
     /// <summary>
     /// Id of the note type.
     /// </summary>
-    public long Id { get; internal set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// Name of the note type.

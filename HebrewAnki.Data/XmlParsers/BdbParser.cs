@@ -5,14 +5,12 @@ namespace HebrewAnki.Data.XmlParsers
 {
     public static class BdbParser
     {
-        private static string _xmlPath = "../../../../HebrewAnki.Data/lexicon/bdb.xml";
-
-        public static List<BdbEntry> ParseBdb()
+        public static List<BdbEntry> ParseBdb(string xmlPath)
         {
             var entries = new List<BdbEntry>();
 
             var bdbXml = new XmlDocument();
-            bdbXml.Load(_xmlPath);
+            bdbXml.Load(xmlPath);
             var parts = bdbXml.LastChild! as XmlElement;
 
             foreach (XmlElement part in parts.ChildNodes)

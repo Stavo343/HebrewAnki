@@ -98,18 +98,25 @@ public class AnkiCollection
     /// </summary>
     /// <param name="noteType">Note type to add to the collection.</param>
     /// <returns>The id of the added note type.</returns>
-    public long CreateNoteType(AnkiNoteType noteType)
+    public long CreateNoteType(AnkiNoteType noteType, long? noteId = null)
     {
-        var newId = IdFactory.Create();
-        while (_noteTypes.ContainsKey(newId))
+        if (noteId == null)
         {
-            newId++;
-        }
+            var newId = IdFactory.Create();
+            while (_noteTypes.ContainsKey(newId))
+            {
+                newId++;
+            }
 
-        noteType.Id = newId;
+            noteType.Id = newId;
+        }
+        
+        if (_noteTypes.ContainsKey(noteType.Id))
+            throw new InvalidOperationException($"NoteType with ID {noteType.Id} already exists.");
+        
         AddNoteType(noteType);
 
-        return newId;
+        return noteType.Id;
     }
 
     /// <summary>

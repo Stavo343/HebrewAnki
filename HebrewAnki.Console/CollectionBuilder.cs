@@ -5,6 +5,9 @@ namespace HebrewAnki.Console
 {
     public static class CollectionBuilder
     {
+        private static readonly long _hebrewNoteTypeId = 1734550203313;
+        private static readonly long _aramaicNoteTypeId = 1734550280544;
+        
         public static AnkiCollection Build(List<Deck> decks)
         {
             var collection = new AnkiCollection();
@@ -12,16 +15,16 @@ namespace HebrewAnki.Console
             var hebrewToEnglishCardType = new AnkiCardType
             {
                 Name = "Hebrew to English",
-                QuestionFormat = File.ReadAllText("../../../html/HebrewToEnglishQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../../../html/HebrewToEnglishAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/HebrewToEnglishQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/HebrewToEnglishAnswerFormat.html"),
                 Ordinal = 0,
             };
 
             var englishToHebrewCardType = new AnkiCardType
             {
                 Name = "English to Hebrew",
-                QuestionFormat = File.ReadAllText("../../../html/EnglishToHebrewQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../../../html/EnglishToHebrewAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToHebrewQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToHebrewAnswerFormat.html"),
                 Ordinal = 1,
             };
 
@@ -29,21 +32,22 @@ namespace HebrewAnki.Console
                 "Hebrew Vocab Per Chapter",
                 [hebrewToEnglishCardType, englishToHebrewCardType],
                 ["Hebrew Word", "Definition", "Variations Within Chapter", "Total Occurrences", "Deck Information"],
-                File.ReadAllText("../../../html/css/hebrew.css"));
+                File.ReadAllText("../HebrewAnki.Console/html/css/hebrew.css"));
+            hebrewNoteType.Id = _hebrewNoteTypeId;
 
             var aramaicToEnglishCardType = new AnkiCardType
             {
                 Name = "Aramaic to English",
-                QuestionFormat = File.ReadAllText("../../../html/AramaicToEnglishQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../../../html/AramaicToEnglishAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/AramaicToEnglishQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/AramaicToEnglishAnswerFormat.html"),
                 Ordinal = 0,
             };
 
             var englishToAramaicCardType = new AnkiCardType
             {
                 Name = "English to Aramaic",
-                QuestionFormat = File.ReadAllText("../../../html/EnglishToAramaicQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../../../html/EnglishToAramaicAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToAramaicQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToAramaicAnswerFormat.html"),
                 Ordinal = 1,
             };
 
@@ -51,10 +55,11 @@ namespace HebrewAnki.Console
                 "Aramaic Vocab Per Chapter",
                 [aramaicToEnglishCardType, englishToAramaicCardType],
                 ["Aramaic Word", "Definition", "Variations Within Chapter", "Total Occurrences", "Deck Information"],
-                File.ReadAllText("../../../html/css/aramaic.css"));
+                File.ReadAllText("../HebrewAnki.Console/html/css/aramaic.css"));
+            aramaicNoteType.Id = _aramaicNoteTypeId;
 
-            var hebrewNoteTypeId = collection.CreateNoteType(hebrewNoteType);
-            var aramaicNoteTypeId = collection.CreateNoteType(aramaicNoteType);
+            collection.CreateNoteType(hebrewNoteType, _hebrewNoteTypeId);
+            collection.CreateNoteType(aramaicNoteType, _aramaicNoteTypeId);
 
             foreach (var deck in decks)
             {
@@ -83,8 +88,8 @@ namespace HebrewAnki.Console
                     collection.CreateNote(
                         deckId,
                         note.IsHebrew
-                            ? hebrewNoteTypeId
-                            : aramaicNoteTypeId,
+                            ? _hebrewNoteTypeId
+                            : _aramaicNoteTypeId,
                         tagsString,
                         note.Word,
                         HttpUtility.HtmlEncode(note.Definition),

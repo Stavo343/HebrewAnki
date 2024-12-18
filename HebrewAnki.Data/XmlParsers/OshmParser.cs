@@ -5,14 +5,12 @@ namespace HebrewAnki.Data.XmlParsers
 {
     public static class OshmParser
     {
-        private static string _xmlPath = "../../../../HebrewAnki.Data/lexicon/Oshm.xml";
-
-        public static List<OshmEntry> GetOshmEntries()
+        public static List<OshmEntry> ParseOshmEntries(string xmlPath)
         {
             var oshmEntries = new List<OshmEntry>();
 
             var oshmXml = new XmlDocument();
-            oshmXml.Load(_xmlPath);
+            oshmXml.Load(xmlPath);
             var currentEntry = oshmXml.FirstChild!.NextSibling!.FirstChild!.NextSibling!.FirstChild!.FirstChild! as XmlElement;
 
             while (currentEntry != null)

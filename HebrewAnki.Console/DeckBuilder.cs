@@ -6,23 +6,27 @@ namespace HebrewAnki.Console
 {
     public class DeckBuilder
     {
+        private Action<string> _log;
+        
         private readonly List<LexicalIndexEntry> _lexicalIndexEntries;
         private readonly List<WlcBook> _wlcBooks;
         private readonly List<BdbEntry> _bdbEntries;
         private readonly List<OshmEntry> _oshmEntries;
         private readonly string _globalDeckNamePrefix;
 
-        private readonly string _totalWordOccurrencesJsonPath = "../../../../HebrewAnki.Data/json metadata/totalWordOccurrences.json";
+        private readonly string _totalWordOccurrencesJsonPath = "../HebrewAnki.Data/json metadata/totalWordOccurrences.json";
         private Dictionary<string, int> _totalWordOccurrences = new();
         private readonly bool _totalWordOccurrencesNeedsUpdated = false;
 
         public DeckBuilder(
+            Action<string> logFunction,
             List<LexicalIndexEntry> lexicalIndexEntries,
             List<WlcBook> wlcBooks,
             List<BdbEntry> bdbEntries,
             List<OshmEntry> oshmEntries,
             string globalDeckNamePrefix)
         {
+            _log = logFunction;
             _lexicalIndexEntries = lexicalIndexEntries;
             _wlcBooks = wlcBooks;
             _bdbEntries = bdbEntries;
@@ -40,25 +44,35 @@ namespace HebrewAnki.Console
             }
         }
 
-        public List<Deck> Build(DeckScope deckScope)
+        public List<Deck> Build(List<Chapter> chaptersToBuild = null, List<Chapter> chaptersAlreadyBuilt = null, DeckScope deckScope = DeckScope.Chapter)
         {
+            chaptersToBuild = chaptersToBuild ?? BookData.GetAllChapters();
+            chaptersAlreadyBuilt = chaptersAlreadyBuilt ?? new();
+            
+            var lemmasToSkip = GetLemmasToSkip(chaptersAlreadyBuilt);
+            var booksToBuild = chaptersToBuild.Select(c => BookData.WlcBookHebrewNames.First(x => x.Value == c.Book).Key).Distinct().ToList();
             var decks = new List<Deck>();
 
-            foreach (var wlcBookName in BookNames.WlcBookHebrewNames.Keys)
+            foreach (var wlcBookName in booksToBuild)
             {
                 var wlcBook = _wlcBooks.First(w => w.OsisId == wlcBookName);
-                var bookName = BookNames.WlcBookHebrewNames[wlcBookName];
-                var bookDeckNamePrefix = $"{_globalDeckNamePrefix}::{bookName}";
+                var hebrewBookName = BookData.WlcBookHebrewNames[wlcBookName];
+                _log($"Parsing vocabulary for chapters from {hebrewBookName}");
+                var bookDeckNamePrefix = $"{_globalDeckNamePrefix}::{hebrewBookName}";
                 var chapterIndex = 0;
 
                 var bookDeck = new Deck
                 {
                     Name = $"{bookDeckNamePrefix}",
                 };
+                
+                var bookChaptersToBuild = chaptersToBuild.Where(c => c.Book == hebrewBookName).Select(c => c.ChapterNumber).ToList();
 
                 foreach (var chapter in wlcBook.Chapters)
                 {
                     chapterIndex++;
+                    if (!bookChaptersToBuild.Contains(chapterIndex))
+                        continue;
 
                     var deck = deckScope == DeckScope.Book
                         ? bookDeck
@@ -75,12 +89,16 @@ namespace HebrewAnki.Console
                         {
                             if (chainedLemma != null
                                 && GetStrippedLemma(wlcWord.Lemma) != chainedLemma)
-                                throw new InvalidDataException($"{bookName} {chapter}: {GetStrippedLemma(wlcWord.Lemma)} follows {chainedLemma} and does not match.");
+                                throw new InvalidDataException($"{hebrewBookName} {chapter}: {GetStrippedLemma(wlcWord.Lemma)} follows {chainedLemma} and does not match.");
 
                             chainedLemma = GetStrippedLemma(wlcWord.Lemma);
 
                             continue;
                         }
+
+                        chainedLemma = null;
+                        if (lemmasToSkip.Contains(wlcWord.Lemma))
+                            continue;
 
                         string word = null;
                         string definition = null;
@@ -92,6 +110,7 @@ namespace HebrewAnki.Console
                             var bdbEntry = _bdbEntries.First(b => b.Id == lexicalIndexEntry.BdbIndex);
                             definition = bdbEntry.Definitions;
                         }
+                        // more than one definition
                         catch
                         {
                             var definitionIndex = 1;
@@ -147,14 +166,10 @@ namespace HebrewAnki.Console
                                     Variation = variation,
                                     Oshm = oshmEntry.Value
                                 });
-
-                        chainedLemma = null;
                     }
 
                     if (deckScope == DeckScope.Chapter)
                         decks.Add(deck);
-
-                    chainedLemma = null;
                 }
 
                 if (deckScope == DeckScope.Book)
@@ -172,6 +187,39 @@ namespace HebrewAnki.Console
             }
 
             return decks;
+        }
+
+        private List<string> GetLemmasToSkip(List<Chapter> chaptersAlreadyBuilt)
+        {
+            var result = new List<string>();
+            var hebrewBookNamesToCheck = chaptersAlreadyBuilt.Select(c => c.Book).Distinct().ToList();
+            
+            foreach (var wlcBook in _wlcBooks)
+            {
+                var hebrewBookName = BookData.WlcBookHebrewNames[wlcBook.OsisId];
+                if (!hebrewBookNamesToCheck.Contains(hebrewBookName))
+                    continue;
+                
+                var chaptersToCheck = chaptersAlreadyBuilt
+                    .Where(c => c.Book == hebrewBookName)
+                    .Select(c => c.ChapterNumber).ToList();
+                
+                var chapterNumber = 0;
+                foreach (var wlcChapter in wlcBook.Chapters)
+                {
+                    chapterNumber++;
+                    
+                    if (!chaptersToCheck.Contains(chapterNumber))
+                        continue;
+                    
+                    result.AddRange(
+                        wlcChapter.Verses.SelectMany(v => v.Words)
+                            .Where(w => !w.Lemma.Contains("+"))
+                            .Select(w => w.Lemma));
+                }
+            }
+
+            return result;
         }
 
         private LexicalIndexEntry GetLexicalIndexEntry(string lemma)

@@ -5,14 +5,12 @@ namespace HebrewAnki.Data.XmlParsers
 {
     public static class LexicalIndexParser
     {
-        private static string _xmlPath = "../../../../HebrewAnki.Data/lexicon/LexicalIndex.xml";
-
-        public static List<LexicalIndexEntry> ParseLexicalIndex()
+        public static List<LexicalIndexEntry> ParseLexicalIndex(string xmlPath)
         {
             var lexicalIndexEntries = new List<LexicalIndexEntry>();
 
             var hebrewLexiconXml = new XmlDocument();
-            hebrewLexiconXml.Load(_xmlPath);
+            hebrewLexiconXml.Load(xmlPath);
             var hebrewPart = hebrewLexiconXml.LastChild!.FirstChild! as XmlElement;
             ExtractEntries(hebrewPart, lexicalIndexEntries);
             var aramaicPart = hebrewPart.NextSibling! as XmlElement;

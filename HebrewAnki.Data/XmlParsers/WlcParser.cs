@@ -5,13 +5,11 @@ namespace HebrewAnki.Data.XmlParsers
 {
     public static class WlcParser
     {
-        public static string _xmlDirectory = "../../../../HebrewAnki.Data/wlc/";
-
-        public static List<WlcBook> GetWlcBooks()
+        public static List<WlcBook> ParseWlcBooks(string xmlDirectory)
         {
             var wlcBooks = new List<WlcBook>();
 
-            foreach (var bookXmlFilePath in Directory.GetFiles(_xmlDirectory))
+            foreach (var bookXmlFilePath in Directory.GetFiles(xmlDirectory))
             {
                 var bookXml = new XmlDocument();
                 bookXml.Load(bookXmlFilePath);
