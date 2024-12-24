@@ -97,6 +97,8 @@ namespace HebrewAnki.Console
                         }
 
                         chainedLemma = null;
+                        if (wlcWord.Lemma == "853")
+                            _ = 1;
                         if (lemmasToSkip.Contains(GetFormattedLemma(wlcWord.Lemma)))
                             continue;
 
@@ -140,9 +142,8 @@ namespace HebrewAnki.Console
 
                         var variation = wlcWord.Value.Replace("/", "");
 
-                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == word);
-                        if (existingNote == null)
-                            existingNote = decks.SelectMany(d => d.Notes).FirstOrDefault(n => n.Word == word);
+                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == word)
+                            ?? decks.SelectMany(d => d.Notes).FirstOrDefault(n => n.Word == word);
 
                         if (existingNote == null)
                             deck.Notes.Add(new Note
@@ -159,7 +160,7 @@ namespace HebrewAnki.Console
                                 ]
                                 // have to wait to get occurrence counts
                             });
-                        else if (!existingNote.Variations.Any(v => v.Variation == variation))
+                        else if (existingNote.Variations.All(v => v.Variation != variation))
                             existingNote.Variations.Add(
                                 new()
                                 {
