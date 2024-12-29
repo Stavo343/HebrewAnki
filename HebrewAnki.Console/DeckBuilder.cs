@@ -1,6 +1,7 @@
 ﻿using HebrewAnki.Console.Enums;
 using HebrewAnki.Data.Models;
 using System.Text.Json;
+using DeckBuilderOptions = HebrewAnki.Console.DeckBuilderOptions;
 
 namespace HebrewAnki.Console
 {
@@ -170,8 +171,6 @@ namespace HebrewAnki.Console
                 File.WriteAllText(_totalWordOccurrencesJsonPath, totalWordOccurrencesJson);
             }
             
-            var test = string.Join(", ", decks.SelectMany(d => d.Notes.Select(n => n.Word)).ToList());
-
             return decks;
         }
 
@@ -200,8 +199,8 @@ namespace HebrewAnki.Console
                     
                     result.AddRange(
                         wlcChapter.Verses.SelectMany(v => v.Words)
-                            .Select(w => GetFormattedLemma(w.Lemma))
-                            .Distinct());
+                        .SelectMany(w => GetLexicalIndexEntries(w.Lemma).Select(l => l.StrongsIndex))
+                        .Distinct());
                 }
             }
 
@@ -253,9 +252,9 @@ namespace HebrewAnki.Console
                 .OrderBy(e => e.Aug)
                 .ToList();
             
-            // result.AddRange(_lexicalIndexEntries.Where(e =>
-            //     e.Word == result.First().Word
-            //     && e.StrongsIndex != strong));
+            result.AddRange(_lexicalIndexEntries.Where(e =>
+                e.Word == result.First().Word
+                && e.StrongsIndex != strong));
 
             return result;
         }
