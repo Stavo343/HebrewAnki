@@ -1,7 +1,6 @@
 ﻿using HebrewAnki.Console.Enums;
 using HebrewAnki.Data.Models;
 using System.Text.Json;
-using DeckBuilderOptions = HebrewAnki.Console.DeckBuilderOptions;
 
 namespace HebrewAnki.Console
 {
