@@ -20,18 +20,14 @@ namespace HebrewAnki.Console
 
         public DeckBuilder(
             Action<string> logFunction,
-            List<LexicalIndexEntry> lexicalIndexEntries,
-            List<WlcBook> wlcBooks,
-            List<BdbEntry> bdbEntries,
-            List<OshmEntry> oshmEntries,
-            string globalDeckNamePrefix)
+            DeckBuilderOptions deckBuilderOptions)
         {
             _log = logFunction;
-            _lexicalIndexEntries = lexicalIndexEntries;
-            _wlcBooks = wlcBooks;
-            _bdbEntries = bdbEntries;
-            _oshmEntries = oshmEntries;
-            _globalDeckNamePrefix = globalDeckNamePrefix;
+            _lexicalIndexEntries = deckBuilderOptions.LexicalIndexEntries;
+            _wlcBooks = deckBuilderOptions.WlcBooks;
+            _bdbEntries = deckBuilderOptions.BdbEntries;
+            _oshmEntries = deckBuilderOptions.OshmEntries;
+            _globalDeckNamePrefix = deckBuilderOptions.GlobalDeckNamePrefix;
 
             try
             {
@@ -88,47 +84,34 @@ namespace HebrewAnki.Console
                         if (wlcWord.Lemma.Contains("+"))
                         {
                             if (chainedLemma != null
-                                && GetStrippedLemma(wlcWord.Lemma) != chainedLemma)
-                                throw new InvalidDataException($"{hebrewBookName} {chapter}: {GetStrippedLemma(wlcWord.Lemma)} follows {chainedLemma} and does not match.");
+                                && GetFormattedLemma(wlcWord.Lemma) != chainedLemma)
+                                throw new InvalidDataException($"{hebrewBookName} {chapter}: {GetFormattedLemma(wlcWord.Lemma)} follows {chainedLemma} and does not match.");
 
-                            chainedLemma = GetStrippedLemma(wlcWord.Lemma);
+                            chainedLemma = GetFormattedLemma(wlcWord.Lemma);
 
                             continue;
                         }
 
                         chainedLemma = null;
-                        if (wlcWord.Lemma == "853")
-                            _ = 1;
                         if (lemmasToSkip.Contains(GetFormattedLemma(wlcWord.Lemma)))
                             continue;
 
                         string word = null;
                         string definition = null;
 
-                        try
-                        {
-                            var lexicalIndexEntry = GetLexicalIndexEntry(wlcWord.Lemma);
-                            word = lexicalIndexEntry.Word;
-                            var bdbEntry = _bdbEntries.First(b => b.Id == lexicalIndexEntry.BdbIndex);
-                            definition = bdbEntry.Definitions;
-                        }
-                        // more than one definition
-                        catch
-                        {
-                            var definitionIndex = 1;
-                            var definitionList = new List<string>();
-                            var lexicalIndexEntries = GetLexicalIndexEntries(wlcWord.Lemma);
-                            word = lexicalIndexEntries.First().Word;
+                        var definitionIndex = 1;
+                        var definitionList = new List<string>();
+                        var lexicalIndexEntries = GetLexicalIndexEntries(wlcWord.Lemma);
+                        word = lexicalIndexEntries.First().Word;
 
-                            foreach (var lexicalEntry in lexicalIndexEntries)
-                            {
-                                var bdbEntry = _bdbEntries.First(b => b.Id == lexicalEntry.BdbIndex);
+                        foreach (var lexicalEntry in lexicalIndexEntries)
+                        {
+                            var bdbEntry = _bdbEntries.First(b => b.Id == lexicalEntry.BdbIndex);
 
-                                definitionList.Add($"{definitionIndex}. {bdbEntry.Definitions}");
-                                definitionIndex++;
-                            }
-                            definition = string.Join(" <br /> ", definitionList);
+                            definitionList.Add($"{definitionIndex}. {bdbEntry.Definitions}");
+                            definitionIndex++;
                         }
+                        definition = string.Join(" <br /> ", definitionList);
 
                         if (_totalWordOccurrencesNeedsUpdated)
                         {
@@ -186,6 +169,8 @@ namespace HebrewAnki.Console
                 File.Delete(_totalWordOccurrencesJsonPath);
                 File.WriteAllText(_totalWordOccurrencesJsonPath, totalWordOccurrencesJson);
             }
+            
+            var test = string.Join(", ", decks.SelectMany(d => d.Notes.Select(n => n.Word)).ToList());
 
             return decks;
         }
@@ -264,19 +249,13 @@ namespace HebrewAnki.Console
                 ? lemma.Substring(0, lemma.Length - 2)
                 : lemma;
 
-            return _lexicalIndexEntries.Where(e => e.StrongsIndex == strong)
+            var result = _lexicalIndexEntries.Where(e => e.StrongsIndex == strong)
                 .OrderBy(e => e.Aug)
                 .ToList();
-        }
-
-        private string GetStrippedLemma(string lemma)
-        {
-            var result = new string(lemma);
-
-            while (result.Contains("/"))
-                result = result.Substring(2);
-
-            result = result.Replace("+", "");
+            
+            // result.AddRange(_lexicalIndexEntries.Where(e =>
+            //     e.Word == result.First().Word
+            //     && e.StrongsIndex != strong));
 
             return result;
         }

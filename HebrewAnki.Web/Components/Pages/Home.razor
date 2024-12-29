@@ -217,19 +217,20 @@
         await Task.Yield();
         
         ClearLogs();
+        var deckBuilderOptions = new DeckBuilderOptions();
         Log("Parsing the lexical index");
-        var lexicalIndexEntries = LexicalIndexParser.ParseLexicalIndex("../HebrewAnki.Data/lexicon/LexicalIndex.xml");
+        deckBuilderOptions.LexicalIndexEntries = LexicalIndexParser.ParseLexicalIndex("../HebrewAnki.Data/lexicon/LexicalIndex.xml");
         Log("Parsing the BDB");
-        var bdbEntries = BdbParser.ParseBdb("../HebrewAnki.Data/lexicon/bdb.xml");
+        deckBuilderOptions.BdbEntries = BdbParser.ParseBdb("../HebrewAnki.Data/lexicon/bdb.xml");
         Log("Parsing the WLC text");
-        var wlcBooks = WlcParser.ParseWlcBooks("../HebrewAnki.Data/wlc/");
+        deckBuilderOptions.WlcBooks = WlcParser.ParseWlcBooks("../HebrewAnki.Data/wlc/");
         Log("Parsing the OHSM entries");
-        var oshmEntries = OshmParser.ParseOshmEntries("../HebrewAnki.Data/lexicon/Oshm.xml");
+        deckBuilderOptions.OshmEntries = OshmParser.ParseOshmEntries("../HebrewAnki.Data/lexicon/Oshm.xml");
+        deckBuilderOptions.GlobalDeckNamePrefix = "12/18/24: Hebrew/Aramaic Vocab";
         
         var deckScope = DeckScope.Chapter;
-        var globalDeckNamePrefix = "12/18/24: Hebrew/Aramaic Vocab";
         Log("Creating notes/cards for your selected chapters. This may take a while...");
-        var decks = new DeckBuilder(Log, lexicalIndexEntries, wlcBooks, bdbEntries, oshmEntries, globalDeckNamePrefix).Build(selectedChapters, _chaptersToSkip, deckScope);
+        var decks = new DeckBuilder(Log, deckBuilderOptions).Build(selectedChapters, _chaptersToSkip, deckScope);
         var newCollection = CollectionBuilder.Build(decks);
 
         Log("Creating the download file");
