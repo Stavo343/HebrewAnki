@@ -103,6 +103,7 @@
     private List<string> Logs { get; } = new();
 
     private List<Chapter> _chaptersToSkip = new();
+    private List<string> _wordsToSkip = new();
     private MudTable<Chapter> _mudTable;
     private TableGroupDefinition<Chapter> _groupDefinition = new()
     {
@@ -141,6 +142,8 @@
         }
         
         SetChaptersToSkip(uploadedAnkiCollection);
+        
+        //_wordsToSkip = uploadedAnkiCollection.Decks.SelectMany(d => d.Cards).Select(c => c.Note).Select(n => n.Fields[])
 
         _homeView = HomeView.Selection;
     }

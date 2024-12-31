@@ -45,7 +45,7 @@ namespace HebrewAnki.Console
             chaptersToBuild = chaptersToBuild ?? BookData.GetAllChapters();
             chaptersAlreadyBuilt = chaptersAlreadyBuilt ?? new();
             
-            var lemmasToSkip = GetLemmasToSkip(chaptersAlreadyBuilt);
+            var wordsToSkip = GetWordsToSkip(chaptersAlreadyBuilt);
             var booksToBuild = chaptersToBuild.Select(c => BookData.WlcBookHebrewNames.First(x => x.Value == c.Book).Key).Distinct().ToList();
             var decks = new List<Deck>();
 
@@ -81,28 +81,28 @@ namespace HebrewAnki.Console
 
                     foreach (var wlcWord in chapter.Verses.SelectMany(v => v.Words))
                     {
+                        // only unnecessary if there's a mistake where a chain doesn't complete
                         if (wlcWord.Lemma.Contains("+"))
                         {
                             if (chainedLemma != null
-                                && GetFormattedLemma(wlcWord.Lemma) != chainedLemma)
-                                throw new InvalidDataException($"{hebrewBookName} {chapter}: {GetFormattedLemma(wlcWord.Lemma)} follows {chainedLemma} and does not match.");
+                                && GetSimplifiedLemma(wlcWord.Lemma) != chainedLemma)
+                                throw new InvalidDataException($"{hebrewBookName} {chapter}: {GetSimplifiedLemma(wlcWord.Lemma)} follows {chainedLemma} and does not match.");
 
-                            chainedLemma = GetFormattedLemma(wlcWord.Lemma);
+                            chainedLemma = GetSimplifiedLemma(wlcWord.Lemma);
 
                             continue;
                         }
 
                         chainedLemma = null;
-                        if (lemmasToSkip.Contains(GetFormattedLemma(wlcWord.Lemma)))
+                        var entry = GetLexicalIndexEntry(wlcWord.Lemma);
+                        
+                        if (wordsToSkip.Any(s => s.Word == entry.Word && s.LanguageCode == entry.LanguageCode))
                             continue;
 
-                        string word = null;
                         string definition = null;
-
                         var definitionIndex = 1;
                         var definitionList = new List<string>();
-                        var lexicalIndexEntries = GetLexicalIndexEntries(wlcWord.Lemma);
-                        word = lexicalIndexEntries.First().Word;
+                        var lexicalIndexEntries = _lexicalIndexEntries.Where(e => e.Word == entry.Word && e.LanguageCode == entry.LanguageCode).ToList();
 
                         foreach (var lexicalEntry in lexicalIndexEntries)
                         {
@@ -115,41 +115,42 @@ namespace HebrewAnki.Console
 
                         if (_totalWordOccurrencesNeedsUpdated)
                         {
-                            if (_totalWordOccurrences.ContainsKey(word))
-                                _totalWordOccurrences[word]++;
+                            if (_totalWordOccurrences.ContainsKey(entry.Word))
+                                _totalWordOccurrences[entry.Word]++;
                             else
-                                _totalWordOccurrences.Add(word, 1);
+                                _totalWordOccurrences.Add(entry.Word, 1);
                         }
 
-                        var oshmEntry = _oshmEntries.First(e => e.MorphologyCode == wlcWord.Morph);
+                        //var oshmEntry = _oshmEntries.First(e => e.MorphologyCode == wlcWord.Morph);
 
-                        var variation = wlcWord.Value.Replace("/", "");
+                        //var variation = wlcWord.Value.Replace("/", "");
 
-                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == word)
-                            ?? decks.SelectMany(d => d.Notes).FirstOrDefault(n => n.Word == word);
+                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == entry.Word && n.IsHebrew == (entry.LanguageCode == "heb"))
+                            ?? decks.SelectMany(d => d.Notes).FirstOrDefault(n => n.Word == entry.Word && n.IsHebrew == (entry.LanguageCode == "heb"));
 
                         if (existingNote == null)
                             deck.Notes.Add(new Note
                             {
-                                Word = word,
+                                Word = entry.Word,
                                 Definition = definition,
-                                Variations =
-                                [
-                                    new()
-                                    {
-                                        Variation = variation,
-                                        Oshm = oshmEntry.Value
-                                    }
-                                ]
+                                // Variations =
+                                // [
+                                //     new()
+                                //     {
+                                //         Variation = variation,
+                                //         Oshm = oshmEntry.Value
+                                //     }
+                                // ],
+                                IsHebrew = entry.LanguageCode == "heb"
                                 // have to wait to get occurrence counts
                             });
-                        else if (existingNote.Variations.All(v => v.Variation != variation))
-                            existingNote.Variations.Add(
-                                new()
-                                {
-                                    Variation = variation,
-                                    Oshm = oshmEntry.Value
-                                });
+                        // else if (existingNote.Variations.All(v => v.Variation != variation))
+                        //     existingNote.Variations.Add(
+                        //         new()
+                        //         {
+                        //             Variation = variation,
+                        //             Oshm = oshmEntry.Value
+                        //         });
                     }
 
                     if (deckScope == DeckScope.Chapter)
@@ -173,9 +174,9 @@ namespace HebrewAnki.Console
             return decks;
         }
 
-        private List<string> GetLemmasToSkip(List<Chapter> chaptersAlreadyBuilt)
+        private List<LexicalIndexEntry> GetWordsToSkip(List<Chapter> chaptersAlreadyBuilt)
         {
-            var result = new List<string>();
+            var result = new List<LexicalIndexEntry>();
             var hebrewBookNamesToCheck = chaptersAlreadyBuilt.Select(c => c.Book).Distinct().ToList();
             
             foreach (var wlcBook in _wlcBooks)
@@ -195,32 +196,23 @@ namespace HebrewAnki.Console
                     
                     if (!chaptersToCheck.Contains(chapterNumber))
                         continue;
-                    
-                    result.AddRange(
-                        wlcChapter.Verses.SelectMany(v => v.Words)
-                        .SelectMany(w => GetLexicalIndexEntries(w.Lemma).Select(l => l.StrongsIndex))
-                        .Distinct());
+
+                    foreach (var word in wlcChapter.Verses.SelectMany(v => v.Words))
+                    {
+                        var entry = GetLexicalIndexEntry(word.Lemma);
+                        if (!result.Any(r => r.Word == entry.Word && r.LanguageCode == entry.LanguageCode))
+                            result.Add(entry);
+                    }
                 }
             }
 
-            return result;
-        }
-
-        private string GetFormattedLemma(string lemma)
-        {
-            lemma = lemma.Replace("+", "");
-            
-            while (lemma.Contains("/"))
-                lemma = lemma.Substring(2);
-
-            if (lemma.Contains(" "))
-                lemma = lemma.Substring(0, lemma.Length - 2);
-
-            return lemma;
+            return result.Distinct().ToList();
         }
 
         private LexicalIndexEntry GetLexicalIndexEntry(string lemma)
         {
+            lemma = lemma.Replace("+", "");
+            
             var strong = "";
             string aug = null;
 
@@ -238,24 +230,17 @@ namespace HebrewAnki.Console
             return _lexicalIndexEntries.First(e => e.StrongsIndex == strong && e.Aug == aug);
         }
 
-        private List<LexicalIndexEntry> GetLexicalIndexEntries(string lemma)
+        private string GetSimplifiedLemma(string lemma)
         {
+            lemma = lemma.Replace("+", "");
+            
             while (lemma.Contains("/"))
                 lemma = lemma.Substring(2);
 
-            var strong = lemma.Contains(" ")
-                ? lemma.Substring(0, lemma.Length - 2)
-                : lemma;
+            if (lemma.Contains(" "))
+                lemma = lemma.Substring(0, lemma.Length - 2);
 
-            var result = _lexicalIndexEntries.Where(e => e.StrongsIndex == strong)
-                .OrderBy(e => e.Aug)
-                .ToList();
-            
-            result.AddRange(_lexicalIndexEntries.Where(e =>
-                e.Word == result.First().Word
-                && e.StrongsIndex != strong));
-
-            return result;
+            return lemma;
         }
     }
 }

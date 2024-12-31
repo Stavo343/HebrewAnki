@@ -12,14 +12,14 @@ namespace HebrewAnki.Data.XmlParsers
             var hebrewLexiconXml = new XmlDocument();
             hebrewLexiconXml.Load(xmlPath);
             var hebrewPart = hebrewLexiconXml.LastChild!.FirstChild! as XmlElement;
-            ExtractEntries(hebrewPart, lexicalIndexEntries);
+            ExtractEntries(hebrewPart, lexicalIndexEntries, "heb");
             var aramaicPart = hebrewPart.NextSibling! as XmlElement;
-            ExtractEntries(aramaicPart, lexicalIndexEntries);
+            ExtractEntries(aramaicPart, lexicalIndexEntries, "arc");
 
             return lexicalIndexEntries;
         }
 
-        private static List<LexicalIndexEntry> ExtractEntries(XmlElement part, List<LexicalIndexEntry> entries)
+        private static List<LexicalIndexEntry> ExtractEntries(XmlElement part, List<LexicalIndexEntry> entries, string languageCode)
         {
             foreach (XmlElement entry in part.ChildNodes)
             {
@@ -39,7 +39,8 @@ namespace HebrewAnki.Data.XmlParsers
                     Definition = def.InnerText,
                     BdbIndex = xref.Attributes!["bdb"]?.Value?.ToString()!,
                     StrongsIndex = xref.Attributes!["strong"]?.Value?.ToString()!,
-                    Aug = xref.Attributes!["aug"]?.Value?.ToString()
+                    Aug = xref.Attributes!["aug"]?.Value?.ToString(),
+                    LanguageCode = languageCode
                 });
             }
 

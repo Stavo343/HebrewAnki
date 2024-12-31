@@ -93,7 +93,7 @@ namespace HebrewAnki.Console
                         tagsString,
                         note.Word,
                         HttpUtility.HtmlEncode(note.Definition),
-                        string.Join(" <br /> ", note.Variations.Select(v => $"- {v.Variation}: {v.Oshm}")),
+                        //string.Join(" <br /> ", note.Variations.Select(v => $"- {v.Variation}: {v.Oshm}")),
                         note.TotalOccurrences.ToString(),
                         string.Empty
                         );

@@ -11,5 +11,7 @@
         public string StrongsIndex { get; set; }
 
         public string? Aug { get; set; }
+        
+        public string LanguageCode { get; set; }
     }
 }
