@@ -11,7 +11,7 @@ namespace HebrewAnki.Console
         private readonly List<LexicalIndexEntry> _lexicalIndexEntries;
         private readonly List<WlcBook> _wlcBooks;
         private readonly List<BdbEntry> _bdbEntries;
-        private readonly List<OshmEntry> _oshmEntries;
+        //private readonly List<OshmEntry> _oshmEntries;
         private readonly string _globalDeckNamePrefix;
 
         private readonly string _totalWordOccurrencesJsonPath = "../HebrewAnki.Data/json metadata/totalWordOccurrences.json";
@@ -26,7 +26,7 @@ namespace HebrewAnki.Console
             _lexicalIndexEntries = deckBuilderOptions.LexicalIndexEntries;
             _wlcBooks = deckBuilderOptions.WlcBooks;
             _bdbEntries = deckBuilderOptions.BdbEntries;
-            _oshmEntries = deckBuilderOptions.OshmEntries;
+            //_oshmEntries = deckBuilderOptions.OshmEntries;
             _globalDeckNamePrefix = deckBuilderOptions.GlobalDeckNamePrefix;
 
             try
@@ -260,7 +260,6 @@ namespace HebrewAnki.Console
 
             var options = _lexicalIndexEntries.Where(e => e.StrongsIndex == strong);
             
-            
             if (options.Select(o => o.Word).Distinct().Count() > 1)
                 switch (strong)
                 {
@@ -301,7 +300,7 @@ namespace HebrewAnki.Console
 
         private string GetSimplifiedLemma(LexicalIndexEntry entry)
         {
-            var result = entry.StrongsIndex;
+            var result = new string(entry.StrongsIndex);
             
             if (!string.IsNullOrWhiteSpace(entry.Aug))
                 result += $" {entry.Aug}";
