@@ -13,6 +13,8 @@ namespace HebrewAnki.Console
         private readonly List<BdbEntry> _bdbEntries;
         //private readonly List<OshmEntry> _oshmEntries;
         private readonly string _globalDeckNamePrefix;
+        private readonly bool _ignoreProperNouns;
+        private readonly bool _ignoreAramaic;
 
         private readonly string _totalWordOccurrencesJsonPath = "../HebrewAnki.Data/json metadata/totalWordOccurrences.json";
         private Dictionary<string, Dictionary<string, Dictionary<string, int>>> _totalWordOccurrences = new();
@@ -28,6 +30,8 @@ namespace HebrewAnki.Console
             _bdbEntries = deckBuilderOptions.BdbEntries;
             //_oshmEntries = deckBuilderOptions.OshmEntries;
             _globalDeckNamePrefix = deckBuilderOptions.GlobalDeckNamePrefix;
+            _ignoreProperNouns = deckBuilderOptions.IgnoreProperNouns;
+            _ignoreAramaic = deckBuilderOptions.IgnoreAramaic;
 
             try
             {
@@ -82,7 +86,11 @@ namespace HebrewAnki.Console
                     foreach (var wlcWord in chapter.Verses.SelectMany(v => v.Words))
                     {
                         var entry = GetLexicalIndexEntry(wlcWord.Lemma);
-                        
+
+                        if (_ignoreProperNouns && entry.Pos == "Np")
+                            continue;
+                        if (_ignoreAramaic && entry.LanguageCode == "arc")
+                            continue;
                         if (wordsToSkip.Any(s => s.Word == entry.Word && s.LanguageCode == entry.LanguageCode))
                             continue;
 

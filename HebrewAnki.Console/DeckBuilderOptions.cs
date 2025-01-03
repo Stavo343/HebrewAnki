@@ -13,4 +13,8 @@ public class DeckBuilderOptions
     public List<OshmEntry> OshmEntries { get; set; } = new ();
     
     public string GlobalDeckNamePrefix { get; set; } = string.Empty;
+    
+    public bool IgnoreProperNouns { get; set; } = false;
+    
+    public bool IgnoreAramaic { get; set; } = false;
 }

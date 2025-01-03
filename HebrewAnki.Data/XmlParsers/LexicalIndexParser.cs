@@ -23,20 +23,30 @@ namespace HebrewAnki.Data.XmlParsers
         {
             foreach (XmlElement entry in part.ChildNodes)
             {
+                string pos = null;
                 var w = entry.FirstChild!;
 
-                var def = w.NextSibling!;
-                while (def != null && def.Name != "def")
-                    def = def.NextSibling!;
-                if (def == null)
+                var currentSibling = w.NextSibling!;
+                while (currentSibling != null && currentSibling.Name != "def")
+                {
+                    if (currentSibling.Name == "pos")
+                        pos = currentSibling.InnerText;
+                    
+                    currentSibling = currentSibling.NextSibling!;
+                }
+                if (currentSibling == null)
                     continue;
 
-                var xref = def.NextSibling!;
+                var xref = currentSibling.NextSibling!;
+
+                if (pos == null)
+                    _ = 1;
 
                 entries.Add(new()
                 {
                     Word = w.InnerText,
-                    Definition = def.InnerText,
+                    Pos = pos,
+                    Definition = currentSibling.InnerText,
                     BdbIndex = xref.Attributes!["bdb"]?.Value?.ToString()!,
                     StrongsIndex = xref.Attributes!["strong"]?.Value?.ToString()!,
                     Aug = xref.Attributes!["aug"]?.Value?.ToString(),

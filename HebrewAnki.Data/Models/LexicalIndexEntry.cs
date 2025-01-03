@@ -3,6 +3,8 @@
     public class LexicalIndexEntry
     {
         public string Word { get; set; }
+        
+        public string Pos { get; set; }
 
         public string Definition { get; set; }
 
