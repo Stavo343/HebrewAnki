@@ -5,8 +5,8 @@ namespace HebrewAnki.Console
 {
     public static class CollectionBuilder
     {
-        private static readonly long _hebrewNoteTypeId = 1734550203313;
-        private static readonly long _aramaicNoteTypeId = 1734550280544;
+        private static readonly long _hebrewNoteTypeId = 1734550203314;
+        private static readonly long _aramaicNoteTypeId = 1734550280545;
         
         public static AnkiCollection Build(List<Deck> decks)
         {
@@ -31,7 +31,7 @@ namespace HebrewAnki.Console
             var hebrewNoteType = new AnkiNoteType(
                 "Hebrew Vocab Per Chapter",
                 [hebrewToEnglishCardType, englishToHebrewCardType],
-                ["Hebrew Word", "Definition", "Variations Within Chapter", "Total Occurrences", "Deck Information"],
+                ["Hebrew Word", "Definition", /*"Variations Within Chapter", */"Total Occurrences", "Deck Information"],
                 File.ReadAllText("../HebrewAnki.Console/html/css/hebrew.css"));
             hebrewNoteType.Id = _hebrewNoteTypeId;
 
@@ -54,7 +54,7 @@ namespace HebrewAnki.Console
             var aramaicNoteType = new AnkiNoteType(
                 "Aramaic Vocab Per Chapter",
                 [aramaicToEnglishCardType, englishToAramaicCardType],
-                ["Aramaic Word", "Definition", "Variations Within Chapter", "Total Occurrences", "Deck Information"],
+                ["Aramaic Word", "Definition", /*"Variations Within Chapter", */"Total Occurrences", "Deck Information"],
                 File.ReadAllText("../HebrewAnki.Console/html/css/aramaic.css"));
             aramaicNoteType.Id = _aramaicNoteTypeId;
 
