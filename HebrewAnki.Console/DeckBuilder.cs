@@ -260,10 +260,19 @@ namespace HebrewAnki.Console
 
             var options = _lexicalIndexEntries.Where(e => e.StrongsIndex == strong);
             
-            if (strong != "7451"
-                && strong != "3651"
-                && options.Select(o => o.Word).Distinct().Count() > 1)
-                _ = 1;
+            
+            if (options.Select(o => o.Word).Distinct().Count() > 1)
+                switch (strong)
+                {
+                    case "7451":
+                        break;
+                    case "3651":
+                        return _lexicalIndexEntries.First(e => e.StrongsIndex == strong && e.Aug == "c");
+                    case "6887":
+                        return _lexicalIndexEntries.First(e => e.StrongsIndex == strong && e.Aug == "c");
+                    default:
+                        throw new InvalidOperationException($"Strongs {strong} has not been accounted for for a null aug value.");
+                }
                 
             return _lexicalIndexEntries.First(e => e.StrongsIndex == strong && e.Aug == "a");
         }
