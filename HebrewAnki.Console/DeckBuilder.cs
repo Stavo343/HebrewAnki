@@ -80,7 +80,7 @@ namespace HebrewAnki.Console
                         ? bookDeck
                         : new Deck
                         {
-                            Name = $"{bookDeckNamePrefix}::Chapter {chapterIndex}",
+                            Name = $"{bookDeckNamePrefix}::Chapter {chapterIndex.ToString("000")}",
                         };
 
                     foreach (var wlcWord in chapter.Verses.SelectMany(v => v.Words))
