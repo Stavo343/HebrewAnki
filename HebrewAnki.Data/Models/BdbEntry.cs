@@ -4,6 +4,8 @@
     {
         public string Id { get; set; }
 
-        public string Definitions { get; set; }
+        public string DefinitionsForQuestion { get; set; }
+
+        public string DefinitionsForAnswer { get; set; }
     }
 }

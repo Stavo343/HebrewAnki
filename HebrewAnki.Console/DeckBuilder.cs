@@ -94,22 +94,24 @@ namespace HebrewAnki.Console
                         if (wordsToSkip.Any(s => s.Word == entry.Word && s.LanguageCode == entry.LanguageCode))
                             continue;
 
-                        string definition = null;
                         var definitionIndex = 1;
-                        var definitionList = new List<string>();
+                        var questionDefinitionList = new List<string>();
+                        var answerDefinitionList = new List<string>();
                         var lexicalIndexEntries = _lexicalIndexEntries.Where(e => e.Word == entry.Word && e.LanguageCode == entry.LanguageCode).ToList();
 
                         foreach (var lexicalEntry in lexicalIndexEntries
-                                     .Where(e => _totalWordOccurrences[entry.LanguageCode][entry.Word].TryGetValue(GetSimplifiedLemma(e), out var discard))
+                                     .Where(e => _totalWordOccurrences[entry.LanguageCode][entry.Word].TryGetValue(GetSimplifiedLemma(e), out _))
                                      .OrderByDescending(e =>
                                      _totalWordOccurrences[entry.LanguageCode][entry.Word][GetSimplifiedLemma(e)]))
                         {
                             var bdbEntry = _bdbEntries.First(b => b.Id == lexicalEntry.BdbIndex);
 
-                            definitionList.Add($"{definitionIndex}. {bdbEntry.Definitions}");
+                            questionDefinitionList.Add($"{definitionIndex}. {bdbEntry.DefinitionsForQuestion}");
+                            answerDefinitionList.Add($"{definitionIndex}. {bdbEntry.DefinitionsForAnswer}");
                             definitionIndex++;
                         }
-                        definition = string.Join(" <br /> ", definitionList);
+                        var definitionForQuestion = string.Join(" <br /> ", questionDefinitionList);
+                        var definitionForAnswer = string.Join(" <br /> ", answerDefinitionList);
 
                         //var oshmEntry = _oshmEntries.First(e => e.MorphologyCode == wlcWord.Morph);
 
@@ -122,7 +124,8 @@ namespace HebrewAnki.Console
                             deck.Notes.Add(new Note
                             {
                                 Word = entry.Word,
-                                Definition = definition,
+                                DefinitionForQuestion = definitionForQuestion,
+                                DefinitionForAnswer = definitionForAnswer,
                                 // Variations =
                                 // [
                                 //     new()

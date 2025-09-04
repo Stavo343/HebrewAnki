@@ -29,15 +29,19 @@ namespace HebrewAnki.Data.XmlParsers
                 if (entry.Name != "entry")
                     continue;
 
-                var entryHtml = string.Empty;
-
+                var sanitizedEntryHtml = string.Empty;
                 foreach (XmlNode child in entry.ChildNodes)
-                    entryHtml += ExtractHtmlFromEntryChild(child);
+                    sanitizedEntryHtml += ExtractHtmlFromEntryChild(child);
+
+                var fullEntryHtml = string.Empty;
+                foreach (XmlNode child in entry.ChildNodes)
+                    fullEntryHtml += ExtractHtmlFromEntryChild(child, true);
 
                 entries.Add(new()
                 {
                     Id = entry.Attributes!["id"]?.Value?.ToString()!,
-                    Definitions = entryHtml
+                    DefinitionsForQuestion = sanitizedEntryHtml,
+                    DefinitionsForAnswer = fullEntryHtml
                 });
 
                 //var w = entry.FirstChild!;
@@ -62,7 +66,7 @@ namespace HebrewAnki.Data.XmlParsers
             return entries;
         }
 
-        private static string ExtractHtmlFromEntryChild(XmlNode child, int indentCount = 0)
+        private static string ExtractHtmlFromEntryChild(XmlNode child, bool includeW = false, int indentCount = 0)
         {
             switch (child.NodeType)
             {
@@ -78,7 +82,7 @@ namespace HebrewAnki.Data.XmlParsers
                                 var senseAsHtml = $"<div{style}>{senseId}. ";
 
                                 foreach (XmlNode senseChild in child.ChildNodes)
-                                    senseAsHtml += ExtractHtmlFromEntryChild(senseChild, indentCount);
+                                    senseAsHtml += ExtractHtmlFromEntryChild(senseChild, includeW, indentCount);
 
                                 return $"{senseAsHtml}</div>";
                             }
@@ -95,6 +99,9 @@ namespace HebrewAnki.Data.XmlParsers
                         case "foreign":
                             return $"<span class=\"foreign\">{child.InnerText}</span>";
                         case "w":
+                            return includeW
+                                ? $" <span class=\"w\">{child.InnerText}</span> "
+                                : string.Empty;
                         case "status":
                         case "ref":
                         case "page":

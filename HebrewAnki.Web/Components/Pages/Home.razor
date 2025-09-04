@@ -38,12 +38,6 @@
                 }
             </style>
             
-            <h3>Options:</h3>
-            <MudCheckBox @bind-Value="_ignoreProperNouns">Ignore proper nouns when generating flash cards</MudCheckBox>
-            <MudCheckBox @bind-Value="_ignoreAramaic">Ignore Aramaic words</MudCheckBox>
-            
-            <MudButton @onclick="GenerateDeck">Generate Deck</MudButton>
-            <br />
             <MudTable @ref="_mudTable "Hover="true" Breakpoint="Breakpoint.Sm"
                       Items="@GetSelectableChapters()"
                       Virtualize="false"
@@ -65,6 +59,16 @@
                     <MudTd>@context.ChapterNumber</MudTd>
                 </RowTemplate>
             </MudTable>
+            
+            <br />
+            
+            <h3>Options:</h3>
+            <MudCheckBox @bind-Value="_ignoreProperNouns">Ignore proper nouns when generating flash cards</MudCheckBox>
+            <MudCheckBox @bind-Value="_ignoreAramaic">Ignore Aramaic words</MudCheckBox>
+            
+            <br />
+            
+            <MudButton @onclick="GenerateDeck">Generate Deck</MudButton>
         }
         break;
     case HomeView.GeneratingDeck:
@@ -159,38 +163,22 @@
     {
         foreach (var deck in uploadedCollection.Decks)
         {
-            if (deck.Name == "Default")
+            // root level deck or deck for entire book
+            if (!int.TryParse(deck.Name.Last().ToString(), out _))
                 continue;
             
-            var deckScope = Int32.TryParse(deck.Name.Last().ToString(), out int unused)
-                ? DeckScope.Chapter
-                : DeckScope.Book;
-            
             var bookName = deck.Name.Substring(deck.Name.IndexOf("::") + 2);
-            if (deckScope == DeckScope.Chapter)
-                bookName = bookName.Substring(0, bookName.IndexOf("::"));
+            bookName = bookName.Substring(0, bookName.IndexOf("::"));
 
-            if (deckScope == DeckScope.Chapter)
+            var chapterNumber = deck.Name.Substring(
+                deck.Name.LastIndexOf(" ") + 1,
+                deck.Name.Length - deck.Name.LastIndexOf(" ") - 1);
+            
+            _chaptersToSkip.Add(new()
             {
-                var chapterNumber = deck.Name.Substring(
-                    deck.Name.LastIndexOf(" ") + 1,
-                    deck.Name.Length - deck.Name.LastIndexOf(" ") - 1);
-                
-                _chaptersToSkip.Add(new()
-                {
-                    Book = bookName,
-                    ChapterNumber = Int32.Parse(chapterNumber)
-                });
-            }
-            else
-            {
-                for (var i = 1; i < BookData.ChaptersPerBook[bookName] + 1; i++)
-                    _chaptersToSkip.Add(new()
-                    {
-                        Book = bookName,
-                        ChapterNumber = i
-                    });
-            }
+                Book = bookName,
+                ChapterNumber = Int32.Parse(chapterNumber)
+            });
         }
     }
 

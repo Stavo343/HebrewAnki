@@ -31,7 +31,7 @@ namespace HebrewAnki.Console
             var hebrewNoteType = new AnkiNoteType(
                 "Hebrew Vocab Per Chapter",
                 [hebrewToEnglishCardType, englishToHebrewCardType],
-                ["Hebrew Word", "Definition", /*"Variations Within Chapter", */"Total Occurrences", "Deck Information"],
+                ["Hebrew Word", "DefinitionForQuestion", "DefinitionForAnswer", /*"Variations Within Chapter", */"Total Occurrences", "Deck Information"],
                 File.ReadAllText("../HebrewAnki.Console/html/css/hebrew.css"));
             hebrewNoteType.Id = _hebrewNoteTypeId;
 
@@ -54,7 +54,7 @@ namespace HebrewAnki.Console
             var aramaicNoteType = new AnkiNoteType(
                 "Aramaic Vocab Per Chapter",
                 [aramaicToEnglishCardType, englishToAramaicCardType],
-                ["Aramaic Word", "Definition", /*"Variations Within Chapter", */"Total Occurrences", "Deck Information"],
+                ["Aramaic Word", "DefinitionForQuestion", "DefinitionForAnswer", /*"Variations Within Chapter", */"Total Occurrences", "Deck Information"],
                 File.ReadAllText("../HebrewAnki.Console/html/css/aramaic.css"));
             aramaicNoteType.Id = _aramaicNoteTypeId;
 
@@ -75,7 +75,7 @@ namespace HebrewAnki.Console
                     if (note.TotalOccurrences < 5)
                         tags.Add("FewerThanFiveOccurrences");
 
-                    if (note.Definition[0].ToString() == note.Definition[0].ToString().ToUpper())
+                    if (note.DefinitionForQuestion[0].ToString() == note.DefinitionForQuestion[0].ToString().ToUpper())
                         tags.Add("ProperNoun");
 
                     if (!note.IsHebrew)
@@ -92,7 +92,8 @@ namespace HebrewAnki.Console
                             : _aramaicNoteTypeId,
                         tagsString,
                         note.Word,
-                        HttpUtility.HtmlEncode(note.Definition),
+                        HttpUtility.HtmlEncode(note.DefinitionForQuestion),
+                        HttpUtility.HtmlEncode(note.DefinitionForAnswer),
                         //string.Join(" <br /> ", note.Variations.Select(v => $"- {v.Variation}: {v.Oshm}")),
                         note.TotalOccurrences.ToString(),
                         string.Empty
