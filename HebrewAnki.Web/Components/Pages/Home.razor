@@ -1,7 +1,11 @@
 ﻿@page "/"
+@using System.Text
+@using System.Text.Json
 @using AnkiNet
 @using HebrewAnki.Console
 @using HebrewAnki.Console.Enums
+@using HebrewAnki.Data
+@using HebrewAnki.Data.Models
 @using HebrewAnki.Data.XmlParsers
 @inject IJSRuntime JS
 
@@ -37,8 +41,20 @@
                     text-align: right;
                 }
             </style>
+
+            <!-- BIG warning -->
+            <h3>Options:</h3>
+            <MudCheckBox @bind-Value="_ignoreProperNouns">Ignore proper nouns</MudCheckBox>
+            <MudCheckBox @bind-Value="_ignoreAramaic">Ignore Aramaic words</MudCheckBox>
             
-            <MudTable @ref="_mudTable "Hover="true" Breakpoint="Breakpoint.Sm"
+            <!-- warning -->
+            <MudCheckBox @bind-Value="_backfillOldChapters">Generate missing words from old chapters (only matters if using looser filters than when those chapters were generated)</MudCheckBox>
+            <MudNumericField @bind-Value="_minimumWordOccurrence" Label="Filter out words that occur fewer than this many times" Variant="Variant.Text" Min="0" Max="11871" />
+            <MudNumericField @bind-Value="_maximumWordOccurrence" Label="Filter out words that occur more than this many times" Variant="Variant.Text" Min="1" Max="11871" />
+
+            <br />
+
+            <MudTable @ref="_mudTable" Hover="true" Breakpoint="Breakpoint.Sm"
                       Items="@GetSelectableChapters()"
                       Virtualize="false"
                       GroupBy="@_groupDefinition"
@@ -61,14 +77,9 @@
             </MudTable>
             
             <br />
-            
-            <h3>Options:</h3>
-            <MudCheckBox @bind-Value="_ignoreProperNouns">Ignore proper nouns when generating flash cards</MudCheckBox>
-            <MudCheckBox @bind-Value="_ignoreAramaic">Ignore Aramaic words</MudCheckBox>
-            
             <br />
             
-            <MudButton @onclick="GenerateDeck">Generate Deck</MudButton>
+            <MudButton Color="Color.Primary" @onclick="GenerateDeck">Generate Deck</MudButton>
         }
         break;
     case HomeView.GeneratingDeck:
@@ -109,12 +120,20 @@
     private HomeView _homeView = HomeView.FreshNav;
     private string? _errorMessage;
     private List<string> Logs { get; } = new();
+    
+    private static readonly long HebrewNoteTypeId = 1734550203314;
+    private static readonly long AramaicNoteTypeId = 1734550280545;
+    private readonly string _preferencesJsonPath = "../HebrewAnki.Data/json metadata/preferences.json";
 
     private bool _ignoreProperNouns = false;
     private bool _ignoreAramaic = false;
+    private bool _backfillOldChapters = false;
+    private int _minimumWordOccurrence = 0;
+    private int _maximumWordOccurrence = 11871;
 
+    private AnkiCollection _uploadedAnkiCollection = null;
     private List<Chapter> _chaptersToSkip = new();
-    private List<string> _wordsToSkip = new();
+    private List<(string, string)> _wordsToSkip = new();
     private MudTable<Chapter> _mudTable;
     private TableGroupDefinition<Chapter> _groupDefinition = new()
     {
@@ -143,7 +162,7 @@
         
         try
         {
-            using MemoryStream ms = new MemoryStream();
+            using var ms = new MemoryStream();
             await e.File.OpenReadStream(200000000000).CopyToAsync(ms);
             uploadedAnkiCollection = await AnkiFileReader.ReadFromStreamAsync(ms);
         }
@@ -151,15 +170,15 @@
         {
             _errorMessage = "Something went wrong with reading the .apkg file.";
         }
+
+        _uploadedAnkiCollection = uploadedAnkiCollection;
         
-        SetChaptersToSkip(uploadedAnkiCollection);
-        
-        //_wordsToSkip = uploadedAnkiCollection.Decks.SelectMany(d => d.Cards).Select(c => c.Note).Select(n => n.Fields[])
+        SetChaptersAndWordsToSkip(uploadedAnkiCollection);
 
         _homeView = HomeView.Selection;
     }
 
-    private void SetChaptersToSkip(AnkiCollection uploadedCollection)
+    private void SetChaptersAndWordsToSkip(AnkiCollection uploadedCollection)
     {
         foreach (var deck in uploadedCollection.Decks)
         {
@@ -179,6 +198,17 @@
                 Book = bookName,
                 ChapterNumber = Int32.Parse(chapterNumber)
             });
+
+            foreach (var note in deck.Cards.Select(c => c.Note))
+            {
+                var word = HebrewStringHelper.CleanAndNormalize(note.Fields[0]);
+                var langCode = note.NoteTypeId == HebrewNoteTypeId
+                    ? "heb"
+                    : "arc";
+                
+                if (!_wordsToSkip.Any(w => w.Item1 == word && w.Item2 == langCode))
+                    _wordsToSkip.Add(new ValueTuple<string, string>(word, langCode));
+            }
         }
     }
 
@@ -201,7 +231,7 @@
 
     private async Task GenerateDeck()
     {
-        if (!_mudTable.SelectedItems?.Any() ?? false)
+        if (!_backfillOldChapters && (!_mudTable.SelectedItems?.Any() ?? false))
         {
             _errorMessage = "No chapters were selected.";
             return;
@@ -222,19 +252,24 @@
         deckBuilderOptions.BdbEntries = BdbParser.ParseBdb("../HebrewAnki.Data/lexicon/bdb.xml");
         Log("Parsing the WLC text");
         deckBuilderOptions.WlcBooks = WlcParser.ParseWlcBooks("../HebrewAnki.Data/wlc/");
-        Log("Parsing the OHSM entries");
-        deckBuilderOptions.OshmEntries = OshmParser.ParseOshmEntries("../HebrewAnki.Data/lexicon/Oshm.xml");
         deckBuilderOptions.GlobalDeckNamePrefix = "Hebrew/Aramaic Vocab";
         deckBuilderOptions.IgnoreProperNouns = _ignoreProperNouns;
         deckBuilderOptions.IgnoreAramaic = _ignoreAramaic;
+        deckBuilderOptions.MinimumNumberOfOccurrences = _minimumWordOccurrence;
+        deckBuilderOptions.MaximumNumberOfOccurrences = _maximumWordOccurrence;
+
+        SavePreferences();
         
         var deckScope = DeckScope.Chapter;
+        if (_backfillOldChapters)
+            selectedChapters.AddRange(_chaptersToSkip);
+        
         Log("Creating notes/cards for your selected chapters. This may take a while...");
-        var decks = new DeckBuilder(Log, deckBuilderOptions).Build(selectedChapters, _chaptersToSkip, deckScope);
-        var newCollection = CollectionBuilder.Build(decks);
+        var decks = new DeckBuilder(Log, deckBuilderOptions).Build(selectedChapters, _wordsToSkip, deckScope);
+        var newCollection = CollectionBuilder.Build(decks, _uploadedAnkiCollection);
 
         Log("Creating the download file");
-        using MemoryStream ms = new MemoryStream();
+        using var ms = new MemoryStream();
         await AnkiFileWriter.WriteToStreamAsync(ms, newCollection);
         _newCollectionFile = ms.ToArray();
         
@@ -250,5 +285,38 @@
         using var streamRef = new DotNetStreamReference(stream: stream);
 
         await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+    }
+
+    private void SavePreferences()
+    {
+        var preferences = new Preferences
+        {
+            IgnoreProperNouns = _ignoreProperNouns,
+            IgnoreAramaic = _ignoreAramaic,
+            MinimumNumberOfOccurrences = _minimumWordOccurrence,
+            MaximumNumberOfOccurrences = _maximumWordOccurrence,
+            BackFillOldChapters = _backfillOldChapters
+        };
+        
+        var json = JsonSerializer.Serialize(preferences);
+        File.Delete(_preferencesJsonPath);
+        File.WriteAllText(_preferencesJsonPath, json);
+    }
+
+    private void LoadPreferences()
+    {
+        var json = File.ReadAllText(_preferencesJsonPath);
+        var preferences = JsonSerializer.Deserialize<Preferences>(json);
+
+        _ignoreProperNouns = preferences.IgnoreProperNouns;
+        _ignoreAramaic = preferences.IgnoreAramaic;
+        _minimumWordOccurrence = preferences.MinimumNumberOfOccurrences;
+        _maximumWordOccurrence = preferences.MaximumNumberOfOccurrences;
+        _backfillOldChapters = preferences.BackFillOldChapters;
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        LoadPreferences();
     }
 }

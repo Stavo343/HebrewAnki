@@ -43,24 +43,6 @@ namespace HebrewAnki.Data.XmlParsers
                     DefinitionsForQuestion = sanitizedEntryHtml,
                     DefinitionsForAnswer = fullEntryHtml
                 });
-
-                //var w = entry.FirstChild!;
-
-                //var def = w.NextSibling!;
-                //while (def != null && def.Name != "def")
-                //    def = def.NextSibling!;
-                //if (def == null)
-                //    continue;
-
-                //var xref = def.NextSibling!;
-
-                //entries.Add(new()
-                //{
-                //    Word = w.InnerText,
-                //    Definition = def.InnerText,
-                //    StrongsIndex = xref.Attributes!["strong"]?.Value?.ToString()!,
-                //    Aug = xref.Attributes!["aug"]?.Value?.ToString()
-                //});
             }
 
             return entries;

@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Text;
+using System.Xml;
 using HebrewAnki.Data.Models;
 
 namespace HebrewAnki.Data.XmlParsers
@@ -19,7 +20,7 @@ namespace HebrewAnki.Data.XmlParsers
             return lexicalIndexEntries;
         }
 
-        private static List<LexicalIndexEntry> ExtractEntries(XmlElement part, List<LexicalIndexEntry> entries, string languageCode)
+        private static void ExtractEntries(XmlElement part, List<LexicalIndexEntry> entries, string languageCode)
         {
             foreach (XmlElement entry in part.ChildNodes)
             {
@@ -44,7 +45,7 @@ namespace HebrewAnki.Data.XmlParsers
 
                 entries.Add(new()
                 {
-                    Word = w.InnerText,
+                    Word = HebrewStringHelper.CleanAndNormalize(w.InnerText),
                     Pos = pos,
                     Definition = currentSibling.InnerText,
                     BdbIndex = xref.Attributes!["bdb"]?.Value?.ToString()!,
@@ -53,8 +54,6 @@ namespace HebrewAnki.Data.XmlParsers
                     LanguageCode = languageCode
                 });
             }
-
-            return entries;
         }
     }
 }

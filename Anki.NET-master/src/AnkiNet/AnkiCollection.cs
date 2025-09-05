@@ -98,9 +98,9 @@ public class AnkiCollection
     /// </summary>
     /// <param name="noteType">Note type to add to the collection.</param>
     /// <returns>The id of the added note type.</returns>
-    public long CreateNoteType(AnkiNoteType noteType, long? noteId = null)
+    public long CreateNoteType(AnkiNoteType noteType, long? noteTypeId = null)
     {
-        if (noteId == null)
+        if (noteTypeId == null)
         {
             var newId = IdFactory.Create();
             while (_noteTypes.ContainsKey(newId))
@@ -125,16 +125,21 @@ public class AnkiCollection
     /// </summary>
     /// <param name="name">Name of the deck to create.</param>
     /// <returns>The id of the created deck.</returns>
-    public long CreateDeck(string name)
+    public long CreateDeck(string name, long? deckId = null)
     {
-        var newId = IdFactory.Create();
-        while (_decks.ContainsKey(newId))
+        if (deckId == null)
         {
-            newId++;
+            var newId = IdFactory.Create();
+            while (_decks.ContainsKey(newId))
+            {
+                newId++;
+            }
+
+            deckId = newId;
         }
 
-        AddDeck(newId, name);
-        return newId;
+        AddDeck((long)deckId, name);
+        return (long)deckId;
     }
 
     /// <summary>
