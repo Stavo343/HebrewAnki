@@ -1,5 +1,6 @@
 ﻿using AnkiNet;
 using System.Web;
+using HebrewAnki.Data;
 
 namespace HebrewAnki.Console
 {
@@ -7,26 +8,22 @@ namespace HebrewAnki.Console
     {
         private static readonly long HebrewNoteTypeId = 1734550203314;
         private static readonly long AramaicNoteTypeId = 1734550280545;
-        
+
         public static AnkiCollection Build(List<Deck> decks, AnkiCollection existingCollection = null)
         {
-            // part of the problem is that the deck is always new when the deckId needs to match one that already exists.
-            // This becomes complicated because the deck needs to already exist in the collection for the card to get added to it
-            // I might just need to add in an optional id for decks like I did for notetypes and see if matching that works
-            
-            var collection = /*existingCollection ?? */new AnkiCollection();
+            var collection = existingCollection ?? new AnkiCollection();
 
-            //if (existingCollection == null)
+            if (existingCollection == null)
                 CreateNoteTypes(collection);
 
             foreach (var deck in decks)
             {
                 collection.TryGetDeckByName(deck.Name, out var existingDeck);
                 long deckId;
-                if (existingDeck == null)
-                    deckId = existingDeck.Id;
-                else
+                if (existingDeck.Id == 0)
                     deckId = collection.CreateDeck(deck.Name);
+                else
+                    deckId = existingDeck.Id;
 
                 foreach (var note in deck.Notes)
                 {
@@ -48,17 +45,25 @@ namespace HebrewAnki.Console
                         ? $" {string.Join(" ", tags)} "
                         : string.Empty;
 
-                    collection.CreateNote(
-                        deckId,
-                        note.IsHebrew
-                            ? HebrewNoteTypeId
-                            : AramaicNoteTypeId,
-                        tagsString,
-                        note.Word,
-                        HttpUtility.HtmlEncode(note.DefinitionForQuestion),
-                        HttpUtility.HtmlEncode(note.DefinitionForAnswer),
-                        note.TotalOccurrences.ToString()
-                        );
+                    var existingNote = collection.Decks.SelectMany(d => d.Cards).Select(c => c.Note).Distinct()
+                        .FirstOrDefault(n => HebrewStringHelper.CleanAndNormalize(n.Fields[0]) == HebrewStringHelper.CleanAndNormalize(note.Word)
+                                        && note.IsHebrew == (n.NoteTypeId == HebrewNoteTypeId));
+
+                    if (existingNote.Id == 0)
+                        collection.CreateNote(
+                            deckId,
+                            note.Guid,
+                            note.IsHebrew
+                                ? HebrewNoteTypeId
+                                : AramaicNoteTypeId,
+                            tagsString,
+                            note.Word,
+                            HttpUtility.HtmlEncode(note.DefinitionForQuestion),
+                            HttpUtility.HtmlEncode(note.DefinitionForAnswer),
+                            note.TotalOccurrences.ToString()
+                            );
+                    else
+                        existingNote.Fields[2] = HttpUtility.HtmlEncode(note.DefinitionForAnswer);
                 }
             }
 

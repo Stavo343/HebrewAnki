@@ -125,6 +125,8 @@
     private static readonly long AramaicNoteTypeId = 1734550280545;
     private readonly string _preferencesJsonPath = "../HebrewAnki.Data/json metadata/preferences.json";
 
+    private readonly bool _updateExistingNotes = false;
+
     private bool _ignoreProperNouns = false;
     private bool _ignoreAramaic = false;
     private bool _backfillOldChapters = false;
@@ -199,16 +201,19 @@
                 ChapterNumber = Int32.Parse(chapterNumber)
             });
 
-            foreach (var note in deck.Cards.Select(c => c.Note))
-            {
-                var word = HebrewStringHelper.CleanAndNormalize(note.Fields[0]);
-                var langCode = note.NoteTypeId == HebrewNoteTypeId
-                    ? "heb"
-                    : "arc";
-                
-                if (!_wordsToSkip.Any(w => w.Item1 == word && w.Item2 == langCode))
-                    _wordsToSkip.Add(new ValueTuple<string, string>(word, langCode));
-            }
+            if (!_updateExistingNotes)
+                foreach (var note in deck.Cards.Select(c => c.Note))
+                {
+                    if (note.NoteTypeId == AramaicNoteTypeId)
+                        _ = 1;
+                    var word = HebrewStringHelper.CleanAndNormalize(note.Fields[0]);
+                    var langCode = note.NoteTypeId == HebrewNoteTypeId
+                        ? "heb"
+                        : "arc";
+
+                    if (!_wordsToSkip.Any(w => w.Item1 == word && w.Item2 == langCode))
+                        _wordsToSkip.Add(new ValueTuple<string, string>(word, langCode));
+                }
         }
     }
 
@@ -266,7 +271,10 @@
         
         Log("Creating notes/cards for your selected chapters. This may take a while...");
         var decks = new DeckBuilder(Log, deckBuilderOptions).Build(selectedChapters, _wordsToSkip, deckScope);
-        var newCollection = CollectionBuilder.Build(decks, _uploadedAnkiCollection);
+        AnkiCollection rootAnkiCollection = null;
+        if (_updateExistingNotes)
+            rootAnkiCollection = _uploadedAnkiCollection;
+        var newCollection = CollectionBuilder.Build(decks, rootAnkiCollection);
 
         Log("Creating the download file");
         using var ms = new MemoryStream();

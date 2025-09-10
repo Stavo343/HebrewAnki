@@ -167,7 +167,7 @@ internal sealed class InternalConverter
 
         result.Notes = allNotes.Select(n => new Note(
             n.Id,
-            Guid.NewGuid().ToString().Substring(0, 10),
+            n.Guid,
             n.NoteTypeId,
             0,
             0,
@@ -202,7 +202,7 @@ internal sealed class InternalConverter
 
         result.RevLogs = Array.Empty<RevisionLog>();
         result.Graves = Array.Empty<Grave>();
-        
+
         return result;
     }
 
@@ -249,9 +249,9 @@ internal sealed class InternalConverter
             var cardsForThisNote = cardsByNoteId[note.Id]; // TODO Error handling
             var deckId = cardsForThisNote.Select(c => c.DeckId).Distinct().Single(); // TODO Error handling
 
-            var ids = cardsForThisNote.Select(c => (c.Ordinal, c.Id)).ToArray();
+            var cards = cardsForThisNote.ToArray();
 
-            resultCollection.AddNoteWithCards(note.Id, deckId, note.ModelId, note.Tags, note.Fields, ids);
+            resultCollection.AddNoteWithCards(note.Id, note.Guid, deckId, note.ModelId, note.Tags, note.Fields, cards);
         }
 
         // Ignore RevLogs and Graves

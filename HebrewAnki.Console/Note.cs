@@ -2,13 +2,13 @@
 {
     public class Note
     {
+        public string Guid { get; set; } = System.Guid.NewGuid().ToString().Substring(0, 10);
+
         public string Word { get; set; }
 
         public string DefinitionForQuestion { get; set; }
 
         public string DefinitionForAnswer { get; set; }
-
-        //public List<WordVariation> Variations { get; set; } = new();
 
         public int TotalOccurrences { get; set; } = 0;
 

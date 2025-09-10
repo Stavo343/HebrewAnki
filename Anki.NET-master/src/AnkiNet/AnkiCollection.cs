@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using AnkiNet.CollectionFile.Model;
 
 [assembly:InternalsVisibleTo("AnkiNet.Tests")]
 
@@ -110,10 +111,10 @@ public class AnkiCollection
 
             noteType.Id = newId;
         }
-        
+
         if (_noteTypes.ContainsKey(noteType.Id))
             throw new InvalidOperationException($"NoteType with ID {noteType.Id} already exists.");
-        
+
         AddNoteType(noteType);
 
         return noteType.Id;
@@ -149,7 +150,7 @@ public class AnkiCollection
     /// <param name="noteTypeId">Id of the note type (template) to use to create the nnote and cards.</param>
     /// <param name="fields">Fields of the note to create.</param>
     /// <exception cref="ArgumentException">If the deckId, noteTypeId do not exist, or if the fields count is more than the lengtho of the <see cref="AnkiNoteType.FieldNames"/></exception>
-    public void CreateNote(long deckId, long noteTypeId, string tags, params string[] fields)
+    public void CreateNote(long deckId, string guid, long noteTypeId, string tags, params string[] fields)
     {
         if (!_decks.ContainsKey(deckId))
         {
@@ -173,7 +174,7 @@ public class AnkiCollection
         }
 
         // Create the single note
-        var note = new AnkiNote(newNoteId, existingNoteType.Id, tags, fields);
+        var note = new AnkiNote(newNoteId, guid, existingNoteType.Id, tags, fields);
         _notes.Add(newNoteId, note);
 
         // Create at least one card type
@@ -217,15 +218,15 @@ public class AnkiCollection
         _decks.Add(id, deck);
     }
 
-    internal void AddNoteWithCards(long noteId, long deckId, long noteTypeId, string tags, string[] fields, (long Ordinal, long Id)[] cardIds)
+    internal void AddNoteWithCards(long noteId, string guid, long deckId, long noteTypeId, string tags, string[] fields, Card[] cards)
     {
-        var note = new AnkiNote(noteId, noteTypeId, tags, fields);
+        var note = new AnkiNote(noteId, guid, noteTypeId, tags, fields);
         _notes.Add(noteId, note);
 
-        foreach (var (ordinal, id) in cardIds)
+        foreach (var card in cards)
         {
-            var newCard = new AnkiCard(id, note, ordinal, _notes.Count);
-            _cards.Add(id, newCard);
+            var newCard = new AnkiCard(card.Id, note, card.Ordinal, card.Due);
+            _cards.Add(card.Id, newCard);
             _decks[deckId].AddCard(newCard);
         }
     }
