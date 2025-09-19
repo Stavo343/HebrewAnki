@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\HebrewAnki.Console\HebrewAnki.Console.csproj" />
+      <ProjectReference Include="..\HebrewAnki\HebrewAnki.csproj" />
     </ItemGroup>
 
     <ItemGroup>

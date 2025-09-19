@@ -1,4 +1,4 @@
-﻿namespace HebrewAnki.Console.Enums
+﻿namespace HebrewAnki.Enums
 {
     public enum DeckScope
     {

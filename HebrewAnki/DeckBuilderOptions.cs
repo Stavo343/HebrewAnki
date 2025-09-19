@@ -1,6 +1,6 @@
 using HebrewAnki.Data.Models;
 
-namespace HebrewAnki.Console;
+namespace HebrewAnki;
 
 public class DeckBuilderOptions
 {

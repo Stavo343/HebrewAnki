@@ -1,4 +1,4 @@
-﻿namespace HebrewAnki.Console
+﻿namespace HebrewAnki
 {
     public class Note
     {

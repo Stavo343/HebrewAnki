@@ -1,10 +1,10 @@
 ﻿using System.Text;
-using HebrewAnki.Console.Enums;
 using HebrewAnki.Data.Models;
 using System.Text.Json;
 using HebrewAnki.Data;
+using HebrewAnki.Enums;
 
-namespace HebrewAnki.Console
+namespace HebrewAnki
 {
     public class DeckBuilder
     {

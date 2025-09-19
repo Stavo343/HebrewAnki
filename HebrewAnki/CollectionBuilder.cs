@@ -2,7 +2,7 @@
 using System.Web;
 using HebrewAnki.Data;
 
-namespace HebrewAnki.Console
+namespace HebrewAnki
 {
     public static class CollectionBuilder
     {
@@ -75,16 +75,16 @@ namespace HebrewAnki.Console
             var hebrewToEnglishCardType = new AnkiCardType
             {
                 Name = "Hebrew to English",
-                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/HebrewToEnglishQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/HebrewToEnglishAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki/html/HebrewToEnglishQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki/html/HebrewToEnglishAnswerFormat.html"),
                 Ordinal = 0,
             };
 
             var englishToHebrewCardType = new AnkiCardType
             {
                 Name = "English to Hebrew",
-                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToHebrewQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToHebrewAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki/html/EnglishToHebrewQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki/html/EnglishToHebrewAnswerFormat.html"),
                 Ordinal = 1,
             };
 
@@ -92,22 +92,22 @@ namespace HebrewAnki.Console
                 "Hebrew Vocab Per Chapter",
                 [hebrewToEnglishCardType, englishToHebrewCardType],
                 ["Hebrew Word", "DefinitionForQuestion", "DefinitionForAnswer", /*"Variations Within Chapter", */"Total Occurrences"],
-                File.ReadAllText("../HebrewAnki.Console/html/css/hebrew.css"));
+                File.ReadAllText("../HebrewAnki/html/css/hebrew.css"));
             hebrewNoteType.Id = HebrewNoteTypeId;
 
             var aramaicToEnglishCardType = new AnkiCardType
             {
                 Name = "Aramaic to English",
-                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/AramaicToEnglishQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/AramaicToEnglishAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki/html/AramaicToEnglishQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki/html/AramaicToEnglishAnswerFormat.html"),
                 Ordinal = 0,
             };
 
             var englishToAramaicCardType = new AnkiCardType
             {
                 Name = "English to Aramaic",
-                QuestionFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToAramaicQuestionFormat.html"),
-                AnswerFormat = File.ReadAllText("../HebrewAnki.Console/html/EnglishToAramaicAnswerFormat.html"),
+                QuestionFormat = File.ReadAllText("../HebrewAnki/html/EnglishToAramaicQuestionFormat.html"),
+                AnswerFormat = File.ReadAllText("../HebrewAnki/html/EnglishToAramaicAnswerFormat.html"),
                 Ordinal = 1,
             };
 
@@ -115,7 +115,7 @@ namespace HebrewAnki.Console
                 "Aramaic Vocab Per Chapter",
                 [aramaicToEnglishCardType, englishToAramaicCardType],
                 ["Aramaic Word", "DefinitionForQuestion", "DefinitionForAnswer", /*"Variations Within Chapter", */"Total Occurrences"],
-                File.ReadAllText("../HebrewAnki.Console/html/css/aramaic.css"));
+                File.ReadAllText("../HebrewAnki/html/css/aramaic.css"));
             aramaicNoteType.Id = AramaicNoteTypeId;
 
             collection.CreateNoteType(hebrewNoteType, HebrewNoteTypeId);
