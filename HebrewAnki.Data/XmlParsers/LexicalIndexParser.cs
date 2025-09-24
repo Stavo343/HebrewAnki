@@ -6,12 +6,15 @@ namespace HebrewAnki.Data.XmlParsers
 {
     public static class LexicalIndexParser
     {
-        public static List<LexicalIndexEntry> ParseLexicalIndex(string xmlPath)
+        public static List<LexicalIndexEntry> ParseLexicalIndex()
         {
-            var lexicalIndexEntries = new List<LexicalIndexEntry>();
+            var lexicalIndexPath = $"{AppContext.BaseDirectory}/Data/lexicon/LexicalIndex.xml";
+            if (!File.Exists(lexicalIndexPath))
+                throw new FileNotFoundException($"LexicalIndex.xml not found at {lexicalIndexPath}");
 
+            var lexicalIndexEntries = new List<LexicalIndexEntry>();
             var hebrewLexiconXml = new XmlDocument();
-            hebrewLexiconXml.Load(xmlPath);
+            hebrewLexiconXml.Load(lexicalIndexPath);
             var hebrewPart = hebrewLexiconXml.LastChild!.FirstChild! as XmlElement;
             ExtractEntries(hebrewPart, lexicalIndexEntries, "heb");
             var aramaicPart = hebrewPart.NextSibling! as XmlElement;
@@ -39,9 +42,6 @@ namespace HebrewAnki.Data.XmlParsers
                     continue;
 
                 var xref = currentSibling.NextSibling!;
-
-                if (pos == null)
-                    _ = 1;
 
                 entries.Add(new()
                 {

@@ -5,12 +5,16 @@ namespace HebrewAnki.Data.XmlParsers
 {
     public static class BdbParser
     {
-        public static List<BdbEntry> ParseBdb(string xmlPath)
+        public static List<BdbEntry> ParseBdb()
         {
+            var bdbPath = $"{AppContext.BaseDirectory}/Data/lexicon/bdb.xml";
+            if (!File.Exists(bdbPath))
+                throw new FileNotFoundException($"bdb.xml not found at {bdbPath}");
+
             var entries = new List<BdbEntry>();
 
             var bdbXml = new XmlDocument();
-            bdbXml.Load(xmlPath);
+            bdbXml.Load(bdbPath);
             var parts = bdbXml.LastChild! as XmlElement;
 
             foreach (XmlElement part in parts.ChildNodes)

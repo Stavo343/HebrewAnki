@@ -5,11 +5,15 @@ namespace HebrewAnki.Data.XmlParsers
 {
     public static class WlcParser
     {
-        public static List<WlcBook> ParseWlcBooks(string xmlDirectory)
+        public static List<WlcBook> ParseWlcBooks()
         {
+            var wlcPath = $"{AppContext.BaseDirectory}/Data/wlc";
+            if (!Directory.Exists(wlcPath))
+                throw new DirectoryNotFoundException($"WLC directory not found at {wlcPath}");
+
             var wlcBooks = new List<WlcBook>();
 
-            foreach (var bookXmlFilePath in Directory.GetFiles(xmlDirectory))
+            foreach (var bookXmlFilePath in Directory.GetFiles(wlcPath))
             {
                 var bookXml = new XmlDocument();
                 bookXml.Load(bookXmlFilePath);

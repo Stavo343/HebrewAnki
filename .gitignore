@@ -1,5 +1,7 @@
+.idea
 .vs
 obj
 bin
+publish
 output/
 *.DotSettings.user

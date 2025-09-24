@@ -11,4 +11,8 @@
     <ProjectReference Include="..\HebrewAnki.Data\HebrewAnki.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="html\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -8,8 +8,8 @@ namespace HebrewAnki
 {
     public class DeckBuilder
     {
-        private Action<string> _log;
-        
+        private Func<string, Task> _log;
+
         private readonly List<LexicalIndexEntry> _lexicalIndexEntries;
         private readonly List<WlcBook> _wlcBooks;
         private readonly List<BdbEntry> _bdbEntries;
@@ -19,12 +19,12 @@ namespace HebrewAnki
         private readonly int _minimumNumberOfOccurrences;
         private readonly int _maximumNumberOfOccurrences;
 
-        private readonly string _totalWordOccurrencesJsonPath = "../HebrewAnki.Data/json metadata/totalWordOccurrences.json";
+        private readonly string _totalWordOccurrencesJsonPath = $"{AppContext.BaseDirectory}/Data/json metadata/totalWordOccurrences.json";
         private Dictionary<string, Dictionary<string, Dictionary<string, int>>> _totalWordOccurrences = new();
         private readonly bool _totalWordOccurrencesNeedsUpdated = false;
 
         public DeckBuilder(
-            Action<string> logFunction,
+            Func<string, Task> logFunction,
             DeckBuilderOptions deckBuilderOptions)
         {
             _log = logFunction;
@@ -48,11 +48,11 @@ namespace HebrewAnki
             }
         }
 
-        public List<Deck> Build(List<Chapter> chaptersToBuild = null, List<(string, string)> wordsToSkip = null, DeckScope deckScope = DeckScope.Chapter)
+        public async Task<List<Deck>> Build(List<Chapter> chaptersToBuild = null, List<(string, string)> wordsToSkip = null, DeckScope deckScope = DeckScope.Chapter)
         {
             chaptersToBuild = chaptersToBuild ?? BookData.GetAllChapters();
             wordsToSkip = wordsToSkip ?? new();
-            
+
             if (_totalWordOccurrencesNeedsUpdated)
                 UpdateTotalWordsOccurrences();
             var booksToBuild = chaptersToBuild.Select(c => BookData.WlcBookHebrewNames.First(x => x.Value == c.Book).Key).Distinct().ToList();
@@ -62,7 +62,7 @@ namespace HebrewAnki
             {
                 var wlcBook = _wlcBooks.First(w => w.OsisId == wlcBookName);
                 var hebrewBookName = BookData.WlcBookHebrewNames[wlcBookName];
-                _log($"Parsing vocabulary for chapters from {hebrewBookName}");
+                await _log($"Parsing vocabulary for chapters from {hebrewBookName}");
                 var bookDeckNamePrefix = $"{_globalDeckNamePrefix}::{hebrewBookName}";
                 var chapterIndex = 0;
 
@@ -96,12 +96,15 @@ namespace HebrewAnki
                             continue;
                         if (wordsToSkip.Any(s => s.Item1 == entry.Word && s.Item2 == entry.LanguageCode))
                             continue;
+                        if (deck.Notes.Any(n => n.Word == entry.Word && n.IsHebrew == (entry.LanguageCode == "heb"))
+                            || decks.SelectMany(d => d.Notes).Any(n => n.Word == entry.Word && n.IsHebrew == (entry.LanguageCode == "heb")))
+                            continue;
 
                         var totalWordOccurrences = _totalWordOccurrences
                                 [entry.LanguageCode]
-                            [entry.Word]
-                            .Values
-                            .Sum(v => v);
+                                [entry.Word]
+                                .Values
+                                .Sum(v => v);
                         if (totalWordOccurrences < _minimumNumberOfOccurrences
                             || totalWordOccurrences > _maximumNumberOfOccurrences)
                             continue;
@@ -113,10 +116,12 @@ namespace HebrewAnki
 
                         foreach (var lexicalEntry in lexicalIndexEntries
                                      .Where(e => _totalWordOccurrences[entry.LanguageCode][entry.Word].TryGetValue(GetSimplifiedLemma(e), out _))
-                                     .OrderByDescending(e =>
-                                     _totalWordOccurrences[entry.LanguageCode][entry.Word][GetSimplifiedLemma(e)]))
+                                     .OrderByDescending(e =>_totalWordOccurrences[entry.LanguageCode][entry.Word][GetSimplifiedLemma(e)]))
                         {
                             var bdbEntry = _bdbEntries.First(b => b.Id == lexicalEntry.BdbIndex);
+
+                            if (questionDefinitionList.Any(x => x.Substring(x.IndexOf(" ") + 1) == bdbEntry.DefinitionsForQuestion))
+                                continue;
 
                             questionDefinitionList.Add($"{definitionIndex}. {bdbEntry.DefinitionsForQuestion}");
                             answerDefinitionList.Add($"{definitionIndex}. {bdbEntry.DefinitionsForAnswer}");
@@ -125,18 +130,14 @@ namespace HebrewAnki
                         var definitionForQuestion = string.Join(" <br /> ", questionDefinitionList);
                         var definitionForAnswer = string.Join(" <br /> ", answerDefinitionList);
 
-                        var existingNote = deck.Notes.FirstOrDefault(n => n.Word == entry.Word && n.IsHebrew == (entry.LanguageCode == "heb"))
-                            ?? decks.SelectMany(d => d.Notes).FirstOrDefault(n => n.Word == entry.Word && n.IsHebrew == (entry.LanguageCode == "heb"));
-
-                        if (existingNote == null)
-                            deck.Notes.Add(new Note
-                            {
-                                Word = entry.Word,
-                                DefinitionForQuestion = definitionForQuestion,
-                                DefinitionForAnswer = definitionForAnswer,
-                                TotalOccurrences = totalWordOccurrences,
-                                IsHebrew = entry.LanguageCode == "heb"
-                            });
+                        deck.Notes.Add(new Note
+                        {
+                            Word = entry.Word,
+                            DefinitionForQuestion = definitionForQuestion,
+                            DefinitionForAnswer = definitionForAnswer,
+                            TotalOccurrences = totalWordOccurrences,
+                            IsHebrew = entry.LanguageCode == "heb"
+                        });
                     }
 
                     if (deckScope == DeckScope.Chapter)
