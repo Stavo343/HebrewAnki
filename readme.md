@@ -8,7 +8,7 @@ With this app, you'll be able to make a selection of chapters, and it will gener
 Aramaic words are also optionally included in this collection. Text for prompts for these cards will have a red font color to distinguish from Hebrew cards.
 
 # Disclaimers
-This is a project that I initially built purely for personal use and didn't intend for it to be broadly distributed. It's not quite spaghetti code, but it's certainly not robust or well-formed. I consider this project to be complete (other than any major, breaking bugs that might be found). If there are features you'd like to see, feel free to fork the repository and make them (I just ask that you maintain credit given towards OSHB and Anki.NET, the libraries my project was built on. I've made a few modifications to Anki.NET code to enable it to do what I needed it to do, but it's given me a huge headstart).
+This is a project that I initially built purely for personal use and didn't intend for it to be broadly distributed. It's not quite spaghetti code, but it's certainly not robust or well-formed. I've been using this personally for almost a year at the time of its first release, and I consider this project to be complete (other than any major, breaking bugs that might be found). If there are additional features you'd like to see, feel free to fork the repository and make them! Just make sure that you maintain credit given towards OSHB and Anki.NET, the libraries my project was built on. (I've made a few modifications to Anki.NET code to enable it to do what I needed it to do, but it's given me a huge headstart).
 
 Formatting for the definitions might look a little weird. Many of the answers contain the Hebrew word itself or a different form of it in them which defeats the purpose. Based on the original formatting, there's not a straightforward way to remove these and their surrounding artifacts. So you might see [, ] or something where two words have been removed from the brackets, but the brackets and comma still remain. In answer cards, these words have not been filtered out.
 
@@ -20,7 +20,7 @@ The WLC is based on the Septuagint, so some verse numbers may be different than 
 ### Starting a new deck
 Download the distribution zip file from the latest release and unzip the file.
 
-Open the unzipped folder and run the HebrewAnki.Distributable.exe file.
+Open the unzipped folder and run the HebrewAnki.Distributable.exe file (you may have to add it as an exception to your antivirus software).
 
 For your first use, select No for uploading an existing collection.
 

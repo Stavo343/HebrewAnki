@@ -264,7 +264,7 @@
             var decks = await Task.Run(() => new DeckBuilder(Log, deckBuilderOptions).Build(selectedChapters, _wordsToSkip, deckScope));
             AnkiCollection? rootAnkiCollection = _updateExistingNotes ? _uploadedAnkiCollection : null;
 
-            Log("Creating the download file");
+            Log("Creating the download file. This could take several minutes.");
             StateHasChanged();
             await Task.Delay(1);
 
