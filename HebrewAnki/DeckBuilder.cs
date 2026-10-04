@@ -79,11 +79,12 @@ namespace HebrewAnki
                     if (!bookChaptersToBuild.Contains(chapterIndex))
                         continue;
 
+                    var deckName = $"{bookDeckNamePrefix}::Chapter {chapterIndex.ToString("000")}";
                     var deck = deckScope == DeckScope.Book
                         ? bookDeck
                         : new Deck
                         {
-                            Name = $"{bookDeckNamePrefix}::Chapter {chapterIndex.ToString("000")}",
+                            Name = deckName,
                         };
 
                     foreach (var wlcWord in chapter.Verses.SelectMany(v => v.Words))
@@ -130,6 +131,12 @@ namespace HebrewAnki
                         var definitionForQuestion = string.Join(" <br /> ", questionDefinitionList);
                         var definitionForAnswer = string.Join(" <br /> ", answerDefinitionList);
 
+                        if (answerDefinitionList.Count == 1
+                            && (answerDefinitionList.First().Contains("gent.")
+                                || answerDefinitionList.First().Contains("gent&lt;/span&gt;.")
+                                || answerDefinitionList.First().Contains("adj.gent")))
+                            continue;
+
                         deck.Notes.Add(new Note
                         {
                             Word = entry.Word,
@@ -139,6 +146,13 @@ namespace HebrewAnki
                             IsHebrew = entry.LanguageCode == "heb"
                         });
                     }
+
+                    if (deck.Notes.Count == 0)
+                        deck.Notes.Add(new Note
+                        {
+                            Word = $"Congrats! {deckName}",
+                            DefinitionForQuestion = "You already know all the words in this chapter. This note was created as a placeholder since Anki won't import empty decks, and HebrewAnki will still show this chapter as available without the deck getting imported. We recommend that you either delete or suspend this note but keep the chapter's deck in your collection anyway for a better experience using HebrewAnki."
+                        });
 
                     if (deckScope == DeckScope.Chapter)
                         decks.Add(deck);
